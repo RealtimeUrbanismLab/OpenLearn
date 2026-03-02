@@ -430,8 +430,8 @@ AFRAME.registerComponent('laser-surface', {
   schema: {
     innerColor: {type: 'color', default: '#ff2a2a'},
     outerColor: {type: 'color', default: '#7a0000'},
-    opacity: {type: 'number', default: 0.72},
-    intensity: {type: 'number', default: 2.1},
+    opacity: {type: 'number', default: 0.95},
+    intensity: {type: 'number', default: 4.8},
     alphaPower: {type: 'number', default: 1.8},
     originTarget: {type: 'selector'},
     originNodeName: {type: 'string', default: 'gradient_origin'},
@@ -512,7 +512,7 @@ AFRAME.registerComponent('laser-surface', {
               float fade = pow(1.0 - t, uAlphaPower);
               float core = smoothstep(0.45, 0.0, t);
               vec3 baseColor = mix(uOuterColor, uInnerColor, core);
-              vec3 glow = baseColor * (uIntensity * (0.35 + core * 1.1));
+              vec3 glow = baseColor * (uIntensity * (0.75 + core * 2.0));
               gl_FragColor = vec4(glow, fade * uOpacity);
             }
           `,
