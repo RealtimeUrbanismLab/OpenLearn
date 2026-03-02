@@ -336,7 +336,10 @@ AFRAME.registerComponent('laser-surface', {
     opacity: {type: 'number', default: 0.72},
     intensity: {type: 'number', default: 2.1},
     alphaPower: {type: 'number', default: 1.8},
-    flipGradient: {type: 'boolean', default: false},
+    centerX: {type: 'number', default: 0.5},
+    centerY: {type: 'number', default: 0.5},
+    innerRadius: {type: 'number', default: 0.0},
+    outerRadius: {type: 'number', default: 0.5},
   },
   init() {
     this.el.addEventListener('model-loaded', () => {
@@ -358,7 +361,9 @@ AFRAME.registerComponent('laser-surface', {
             uOpacity: {value: this.data.opacity},
             uIntensity: {value: this.data.intensity},
             uAlphaPower: {value: this.data.alphaPower},
-            uFlip: {value: this.data.flipGradient ? 1.0 : 0.0},
+            uCenter: {value: new THREE.Vector2(this.data.centerX, this.data.centerY)},
+            uInnerRadius: {value: this.data.innerRadius},
+            uOuterRadius: {value: this.data.outerRadius},
           },
           vertexShader: `
             varying vec2 vUv;
@@ -373,11 +378,14 @@ AFRAME.registerComponent('laser-surface', {
             uniform float uOpacity;
             uniform float uIntensity;
             uniform float uAlphaPower;
-            uniform float uFlip;
+            uniform vec2 uCenter;
+            uniform float uInnerRadius;
+            uniform float uOuterRadius;
             varying vec2 vUv;
 
             void main() {
-              float t = clamp(mix(vUv.y, 1.0 - vUv.y, uFlip), 0.0, 1.0);
+              float radius = distance(vUv, uCenter);
+              float t = clamp((radius - uInnerRadius) / max(0.0001, uOuterRadius - uInnerRadius), 0.0, 1.0);
               float fade = pow(1.0 - t, uAlphaPower);
               float core = smoothstep(0.45, 0.0, t);
               vec3 baseColor = mix(uOuterColor, uInnerColor, core);
