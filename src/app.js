@@ -11,6 +11,17 @@ initQRCode()
 let envMapTexture = null
 let envMapPromise = null
 
+const getRenderer = () => {
+  const sceneEl = document.querySelector('a-scene')
+  return sceneEl?.renderer || AFRAME?.scenes?.[0]?.renderer || null
+}
+
+const applyEnvMapToScene = (texture) => {
+  const sceneEl = document.querySelector('a-scene')
+  if (!sceneEl?.object3D) return
+  sceneEl.object3D.environment = texture
+}
+
 const getEnvMapPath = () => {
   const envAsset = document.getElementById('hospital_env')
   return envAsset?.getAttribute('src') || 'assets/hospital_env.exr'
@@ -28,10 +39,23 @@ const loadEnvMapTexture = () => {
     loader.load(
       getEnvMapPath(),
       (texture) => {
-        texture.mapping = THREE.EquirectangularReflectionMapping
-        texture.needsUpdate = true
-        envMapTexture = texture
-        resolve(texture)
+        const renderer = getRenderer()
+
+        if (renderer && THREE.PMREMGenerator) {
+          const pmremGenerator = new THREE.PMREMGenerator(renderer)
+          pmremGenerator.compileEquirectangularShader()
+          const pmremResult = pmremGenerator.fromEquirectangular(texture)
+          texture.dispose()
+          pmremGenerator.dispose()
+          envMapTexture = pmremResult.texture
+        } else {
+          texture.mapping = THREE.EquirectangularReflectionMapping
+          texture.needsUpdate = true
+          envMapTexture = texture
+        }
+
+        applyEnvMapToScene(envMapTexture)
+        resolve(envMapTexture)
       },
       undefined,
       (error) => {
@@ -50,6 +74,7 @@ const applyEnvMapToMaterial = (material, intensity) => {
 
   if (envMapTexture) {
     material.envMap = envMapTexture
+    applyEnvMapToScene(envMapTexture)
     material.needsUpdate = true
     return
   }
