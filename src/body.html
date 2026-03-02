@@ -57,14 +57,14 @@
   xrextras-loading
   xrextras-runtime-error
   ssao
-    renderer="colorManagement: true; physicallyCorrectLights: true; exposure: 0.86"
+    renderer="colorManagement: true; physicallyCorrectLights: true; exposure: 1.08"
   xrweb="allowedDevices: any;
-      defaultEnvironmentFogIntensity: 0.03;
+      defaultEnvironmentFogIntensity: 0.15;
           defaultEnvironmentFloorTexture: #groundTex;
-      defaultEnvironmentFloorColor: #090b0f;
-      defaultEnvironmentSkyBottomColor: #010204;
-      defaultEnvironmentSkyTopColor: #0e1420;
-      defaultEnvironmentSkyGradientStrength: 0.18;
+      defaultEnvironmentFloorColor: #1f2328;
+      defaultEnvironmentSkyBottomColor: #10161f;
+      defaultEnvironmentSkyTopColor: #2a3444;
+      defaultEnvironmentSkyGradientStrength: 0.4;
           scale: absolute">
   <a-assets>
     <a-asset-item id="hospital_env" src="assets/hospital_env.exr"></a-asset-item>
@@ -103,40 +103,32 @@
 
   <!-- Lights -->
   <a-entity
-    light="type: directional; intensity: 4.8; castShadow: true; shadowMapHeight: 4096; shadowMapWidth: 4096; shadowRadius: 0.85; shadowBias: -0.00012; target: #group"
+    light="type: directional; intensity: 3.4; castShadow: true; shadowMapHeight: 4096; shadowMapWidth: 4096; shadowRadius: 0.85; shadowBias: -0.00012; target: #group"
     xrextras-attach="target: group; offset: -8 15 4"
     position="-20 20 20">
   </a-entity>
-  <a-entity light="type: ambient; intensity: 0.012; color: #e8f0ff"></a-entity>
+  <a-entity light="type: ambient; intensity: 0.08; color: #e8f0ff"></a-entity>
 
   <a-entity
     light="type: hemisphere;
-      intensity: 0.03;
-      groundColor: #090d15;
-      color: #2e3a4f">
+      intensity: 0.12;
+      groundColor: #1a2029;
+      color: #4f5f77">
   </a-entity>
 
   <a-entity
     light="type: directional;
-          intensity: 3.2;
+          intensity: 2.0;
           color: #d9e9ff"
     position="10 5 -7">
   </a-entity>
 
   <a-entity
     light="type: directional;
-          intensity: 2.6;
+          intensity: 1.4;
           castShadow: false;
           color: #ffe7d1"
     position="-12 6 -10">
-  </a-entity>
-
-  <a-entity
-    light="type: directional;
-          intensity: 1.3;
-          castShadow: false;
-          color: #f2f6ff"
-    xrextras-attach="target: camera; offset: 0 1.6 1.4">
   </a-entity>
 
   <!-- Main manipulatable group -->
@@ -147,7 +139,7 @@
     xrextras-gesture-detector
     xrextras-two-finger-rotate
     xrextras-pinch-scale>
-    <a-entity id="model_anchor" position="0 -2.60 0">
+    <a-entity id="model_anchor" position="0 -1.80 0">
     <!-- Rotation pivot (optional, you can keep it for organization) -->
     <a-entity id="rotation_pivot" position="0 0 0">
       <a-entity id="xray_tube" gltf-model="#xray_tube_asset" class="cantap rotatable interactable" shadow="cast: true; receive: true">
