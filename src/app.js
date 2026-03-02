@@ -306,6 +306,73 @@ AFRAME.registerComponent('fabric', {
   },
 })
 
+AFRAME.registerComponent('laser-surface', {
+  schema: {
+    innerColor: {type: 'color', default: '#ff3b1f'},
+    outerColor: {type: 'color', default: '#ff7a33'},
+    opacity: {type: 'number', default: 0.95},
+    intensity: {type: 'number', default: 4.5},
+    alphaPower: {type: 'number', default: 1.8},
+    flipGradient: {type: 'boolean', default: false},
+  },
+  init() {
+    this.el.addEventListener('model-loaded', () => {
+      const mesh = this.el.getObject3D('mesh')
+      if (!mesh) return
+
+      const innerColor = new THREE.Color(this.data.innerColor)
+      const outerColor = new THREE.Color(this.data.outerColor)
+
+      mesh.traverse((node) => {
+        if (!node.isMesh) return
+
+        node.material = new THREE.ShaderMaterial({
+          uniforms: {
+            uInnerColor: {value: innerColor},
+            uOuterColor: {value: outerColor},
+            uOpacity: {value: this.data.opacity},
+            uIntensity: {value: this.data.intensity},
+            uAlphaPower: {value: this.data.alphaPower},
+            uFlip: {value: this.data.flipGradient ? 1.0 : 0.0},
+          },
+          vertexShader: `
+            varying vec2 vUv;
+            void main() {
+              vUv = uv;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            uniform vec3 uInnerColor;
+            uniform vec3 uOuterColor;
+            uniform float uOpacity;
+            uniform float uIntensity;
+            uniform float uAlphaPower;
+            uniform float uFlip;
+            varying vec2 vUv;
+
+            void main() {
+              float t = clamp(mix(vUv.y, 1.0 - vUv.y, uFlip), 0.0, 1.0);
+              float fade = pow(1.0 - t, uAlphaPower);
+              float core = smoothstep(0.45, 0.0, t);
+              vec3 baseColor = mix(uOuterColor, uInnerColor, core);
+              vec3 glow = baseColor * (uIntensity * (0.55 + core * 1.7));
+              gl_FragColor = vec4(glow, fade * uOpacity);
+            }
+          `,
+          transparent: true,
+          depthWrite: false,
+          depthTest: true,
+          blending: THREE.AdditiveBlending,
+          side: THREE.DoubleSide,
+        })
+
+        node.renderOrder = 30
+      })
+    })
+  },
+})
+
 // SSAO (Screen Space Ambient Occlusion) component for post-processing depth
 AFRAME.registerComponent('ssao', {
   init() {

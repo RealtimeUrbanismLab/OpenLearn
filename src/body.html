@@ -84,6 +84,9 @@
     <a-asset-item
       id="laser_positioning_lights_asset"
       src="assets/laser_positioning_lights.glb"></a-asset-item>
+    <a-asset-item id="laser_surface_1_asset" src="assets/laser1.glb"></a-asset-item>
+    <a-asset-item id="laser_surface_2_asset" src="assets/laser2.glb"></a-asset-item>
+    <a-asset-item id="laser_surface_3_asset" src="assets/laser3.glb"></a-asset-item>
     <a-asset-item
       id="safety_and_intercom_systems_asset"
       src="assets/safety_and_intercom_systems.glb"></a-asset-item>
@@ -198,6 +201,24 @@
       class="cantap interactable"
       shadow="cast: true; receive: true"
       dark-plastic>
+    </a-entity>
+    <a-entity
+      id="laser_surface_1"
+      gltf-model="#laser_surface_1_asset"
+      class="cantap interactable"
+      laser-surface>
+    </a-entity>
+    <a-entity
+      id="laser_surface_2"
+      gltf-model="#laser_surface_2_asset"
+      class="cantap interactable"
+      laser-surface>
+    </a-entity>
+    <a-entity
+      id="laser_surface_3"
+      gltf-model="#laser_surface_3_asset"
+      class="cantap interactable"
+      laser-surface>
     </a-entity>
     <a-entity
       id="safety_and_intercom_systems"
