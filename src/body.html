@@ -57,7 +57,7 @@
   xrextras-loading
   xrextras-runtime-error
   ssao
-    renderer="colorManagement: true; physicallyCorrectLights: true; exposure: 0.72"
+    renderer="colorManagement: true; physicallyCorrectLights: true; exposure: 0.86"
   xrweb="allowedDevices: any;
       defaultEnvironmentFogIntensity: 0.03;
           defaultEnvironmentFloorTexture: #groundTex;
@@ -103,7 +103,7 @@
 
   <!-- Lights -->
   <a-entity
-    light="type: directional; intensity: 4.1; castShadow: true; shadowMapHeight: 4096; shadowMapWidth: 4096; shadowRadius: 0.85; shadowBias: -0.00012; target: #group"
+    light="type: directional; intensity: 4.8; castShadow: true; shadowMapHeight: 4096; shadowMapWidth: 4096; shadowRadius: 0.85; shadowBias: -0.00012; target: #group"
     xrextras-attach="target: group; offset: -8 15 4"
     position="-20 20 20">
   </a-entity>
@@ -118,17 +118,25 @@
 
   <a-entity
     light="type: directional;
-          intensity: 2.2;
+          intensity: 3.2;
           color: #d9e9ff"
     position="10 5 -7">
   </a-entity>
 
   <a-entity
     light="type: directional;
-          intensity: 1.8;
+          intensity: 2.6;
           castShadow: false;
           color: #ffe7d1"
     position="-12 6 -10">
+  </a-entity>
+
+  <a-entity
+    light="type: directional;
+          intensity: 1.3;
+          castShadow: false;
+          color: #f2f6ff"
+    xrextras-attach="target: camera; offset: 0 1.6 1.4">
   </a-entity>
 
   <!-- Main manipulatable group -->
@@ -139,7 +147,7 @@
     xrextras-gesture-detector
     xrextras-two-finger-rotate
     xrextras-pinch-scale>
-    <a-entity id="model_anchor" position="0 -3.20 0">
+    <a-entity id="model_anchor" position="0 -3.55 0">
     <!-- Rotation pivot (optional, you can keep it for organization) -->
     <a-entity id="rotation_pivot" position="0 0 0">
       <a-entity id="xray_tube" gltf-model="#xray_tube_asset" class="cantap rotatable interactable" shadow="cast: true; receive: true">
@@ -208,7 +216,7 @@
       gltf-model="#laser_positioning_lights_asset"
       class="cantap interactable"
       shadow="cast: true; receive: true"
-      dark-plastic>
+      laser-positioning-dark>
     </a-entity>
     <a-entity
       id="laser_surface_1"
