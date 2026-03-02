@@ -382,32 +382,11 @@ AFRAME.registerComponent('fabric', {
   },
 })
 
-const findGradientOriginNode = (rootObject, originNodeName) => {
-  let markerNode = null
-  const target = originNodeName.toLowerCase()
-
-  rootObject.traverse((node) => {
-    if (markerNode || !node.name) return
-    if (node.name.toLowerCase().includes(target)) markerNode = node
-  })
-
-  return markerNode
-}
-
-const getOriginWorldFromTarget = (targetEl, originNodeName) => {
+const getOriginWorldFromTarget = (targetEl) => {
   if (!targetEl || !targetEl.object3D) return null
-  const root = targetEl.object3D
-
-  const exactMarker = findGradientOriginNode(root, originNodeName)
-  if (exactMarker) {
-    const markerPosition = new THREE.Vector3()
-    exactMarker.getWorldPosition(markerPosition)
-    return markerPosition
-  }
-
-  const fallbackPosition = new THREE.Vector3()
-  root.getWorldPosition(fallbackPosition)
-  return fallbackPosition
+  const worldPosition = new THREE.Vector3()
+  targetEl.object3D.getWorldPosition(worldPosition)
+  return worldPosition
 }
 
 const computeOuterRadiusFromOrigin = (geometry, originLocal) => {
@@ -434,9 +413,8 @@ AFRAME.registerComponent('laser-surface', {
     intensity: {type: 'number', default: 4.8},
     alphaPower: {type: 'number', default: 1.8},
     originTarget: {type: 'selector'},
-    originNodeName: {type: 'string', default: 'gradient_origin'},
-    useMarkerOrigin: {type: 'boolean', default: true},
     autoOuterRadius: {type: 'boolean', default: true},
+    outerRadiusScale: {type: 'number', default: 1.0},
     innerRadius: {type: 'number', default: 0.0},
     outerRadius: {type: 'number', default: 1.0},
   },
@@ -445,36 +423,29 @@ AFRAME.registerComponent('laser-surface', {
       const mesh = this.el.getObject3D('mesh')
       if (!mesh) return
 
+      if (!this.data.originTarget) {
+        console.warn('laser-surface: originTarget is required for correct gradient origin')
+        return
+      }
+
       const innerColor = new THREE.Color(this.data.innerColor)
       const outerColor = new THREE.Color(this.data.outerColor)
-      const targetOriginWorld = this.data.originTarget
-        ? getOriginWorldFromTarget(this.data.originTarget, this.data.originNodeName)
-        : null
-      const markerNode = this.data.useMarkerOrigin && !targetOriginWorld
-        ? findGradientOriginNode(mesh, this.data.originNodeName)
-        : null
-
-      const markerWorld = targetOriginWorld ? targetOriginWorld.clone() : new THREE.Vector3()
-      if (!targetOriginWorld && markerNode) markerNode.getWorldPosition(markerWorld)
+      const targetOriginWorld = getOriginWorldFromTarget(this.data.originTarget)
+      if (!targetOriginWorld) {
+        console.warn('laser-surface: unable to resolve originTarget world position')
+        return
+      }
 
       mesh.traverse((node) => {
         if (!node.isMesh) return
 
-        if (node.name && node.name.toLowerCase().includes(this.data.originNodeName.toLowerCase())) {
-          node.visible = false
-          return
-        }
-
         node.raycast = () => null
 
-        const originWorld = (targetOriginWorld || markerNode)
-          ? markerWorld.clone()
-          : node.getWorldPosition(new THREE.Vector3())
-        const originLocal = node.worldToLocal(originWorld)
+        const originLocal = node.worldToLocal(targetOriginWorld.clone())
         let outerRadius = this.data.outerRadius
 
         if (this.data.autoOuterRadius) {
-          outerRadius = computeOuterRadiusFromOrigin(node.geometry, originLocal)
+          outerRadius = computeOuterRadiusFromOrigin(node.geometry, originLocal) * this.data.outerRadiusScale
         }
 
         node.material = new THREE.ShaderMaterial({
