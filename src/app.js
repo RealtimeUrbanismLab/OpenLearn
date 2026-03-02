@@ -176,12 +176,16 @@ AFRAME.registerComponent('slip-ring-assembly-metal', {
         node.material = node.material.clone()
 
         // Medical-grade metallic finish
+        node.material.map = null
+        node.material.emissiveMap = null
+        node.material.metalnessMap = null
+        node.material.roughnessMap = null
         node.material.color.set('#d4d4d4')
-        node.material.metalness = 1.0
-        node.material.roughness = 0.085
-        node.material.emissive.set('#111111')
-        node.material.emissiveIntensity = 0.08
-        applyEnvMapToMaterial(node.material, 7.2)
+        node.material.metalness = 0.82
+        node.material.roughness = 0.16
+        node.material.emissive.set('#1a1a1a')
+        node.material.emissiveIntensity = 0.16
+        applyEnvMapToMaterial(node.material, 5.8)
         node.material.needsUpdate = true
       })
     })
@@ -202,12 +206,16 @@ AFRAME.registerComponent('metallic', {
         node.material = node.material.clone()
 
         // Neutral metallic appearance
+        node.material.map = null
+        node.material.emissiveMap = null
+        node.material.metalnessMap = null
+        node.material.roughnessMap = null
         node.material.color.set('#c6c6c6')
-        node.material.metalness = 1.0
-        node.material.roughness = 0.11
-        node.material.emissive.set('#0f0f0f')
-        node.material.emissiveIntensity = 0.06
-        applyEnvMapToMaterial(node.material, 6.8)
+        node.material.metalness = 0.8
+        node.material.roughness = 0.18
+        node.material.emissive.set('#171717')
+        node.material.emissiveIntensity = 0.14
+        applyEnvMapToMaterial(node.material, 5.4)
         node.material.needsUpdate = true
       })
     })
@@ -357,51 +365,32 @@ AFRAME.registerComponent('fabric', {
   },
 })
 
-const detectLaserTipUv = (geometry) => {
+const findGradientOriginNode = (rootObject, originNodeName) => {
+  let markerNode = null
+  const target = originNodeName.toLowerCase()
+
+  rootObject.traverse((node) => {
+    if (markerNode || !node.name) return
+    if (node.name.toLowerCase().includes(target)) markerNode = node
+  })
+
+  return markerNode
+}
+
+const computeOuterRadiusFromOrigin = (geometry, originLocal) => {
   const positionAttr = geometry?.attributes?.position
-  const uvAttr = geometry?.attributes?.uv
-  if (!positionAttr || !uvAttr || positionAttr.count === 0 || uvAttr.count === 0) return null
+  if (!positionAttr || positionAttr.count === 0) return 1.0
 
-  const count = Math.min(positionAttr.count, uvAttr.count)
-  let centroidX = 0
-  let centroidY = 0
-  let centroidZ = 0
-
-  for (let index = 0; index < count; index += 1) {
-    centroidX += positionAttr.getX(index)
-    centroidY += positionAttr.getY(index)
-    centroidZ += positionAttr.getZ(index)
+  let maxDistance = 0.0
+  for (let index = 0; index < positionAttr.count; index += 1) {
+    const dx = positionAttr.getX(index) - originLocal.x
+    const dy = positionAttr.getY(index) - originLocal.y
+    const dz = positionAttr.getZ(index) - originLocal.z
+    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz)
+    if (distance > maxDistance) maxDistance = distance
   }
 
-  centroidX /= count
-  centroidY /= count
-  centroidZ /= count
-
-  let tipIndex = 0
-  let minDistanceSq = Number.POSITIVE_INFINITY
-
-  for (let index = 0; index < count; index += 1) {
-    const dx = positionAttr.getX(index) - centroidX
-    const dy = positionAttr.getY(index) - centroidY
-    const dz = positionAttr.getZ(index) - centroidZ
-    const distanceSq = dx * dx + dy * dy + dz * dz
-    if (distanceSq < minDistanceSq) {
-      minDistanceSq = distanceSq
-      tipIndex = index
-    }
-  }
-
-  const tipUv = new THREE.Vector2(uvAttr.getX(tipIndex), uvAttr.getY(tipIndex))
-  let maxUvRadius = 0.0
-
-  for (let index = 0; index < count; index += 1) {
-    const du = uvAttr.getX(index) - tipUv.x
-    const dv = uvAttr.getY(index) - tipUv.y
-    const uvDistance = Math.sqrt(du * du + dv * dv)
-    if (uvDistance > maxUvRadius) maxUvRadius = uvDistance
-  }
-
-  return {tipUv, maxUvRadius}
+  return maxDistance > 0.0001 ? maxDistance : 1.0
 }
 
 AFRAME.registerComponent('laser-surface', {
@@ -411,12 +400,11 @@ AFRAME.registerComponent('laser-surface', {
     opacity: {type: 'number', default: 0.72},
     intensity: {type: 'number', default: 2.1},
     alphaPower: {type: 'number', default: 1.8},
-    autoDetectTip: {type: 'boolean', default: true},
+    originNodeName: {type: 'string', default: 'gradient_origin'},
+    useMarkerOrigin: {type: 'boolean', default: true},
     autoOuterRadius: {type: 'boolean', default: true},
-    centerX: {type: 'number', default: 0.5},
-    centerY: {type: 'number', default: 0.5},
     innerRadius: {type: 'number', default: 0.0},
-    outerRadius: {type: 'number', default: 0.5},
+    outerRadius: {type: 'number', default: 1.0},
   },
   init() {
     this.el.addEventListener('model-loaded', () => {
@@ -425,25 +413,29 @@ AFRAME.registerComponent('laser-surface', {
 
       const innerColor = new THREE.Color(this.data.innerColor)
       const outerColor = new THREE.Color(this.data.outerColor)
+      const markerNode = this.data.useMarkerOrigin
+        ? findGradientOriginNode(mesh, this.data.originNodeName)
+        : null
+
+      const markerWorld = new THREE.Vector3()
+      if (markerNode) markerNode.getWorldPosition(markerWorld)
 
       mesh.traverse((node) => {
         if (!node.isMesh) return
 
+        if (node.name && node.name.toLowerCase().includes(this.data.originNodeName.toLowerCase())) {
+          node.visible = false
+          return
+        }
+
         node.raycast = () => null
 
-        let centerX = this.data.centerX
-        let centerY = this.data.centerY
+        const originWorld = markerNode ? markerWorld.clone() : node.getWorldPosition(new THREE.Vector3())
+        const originLocal = node.worldToLocal(originWorld)
         let outerRadius = this.data.outerRadius
 
-        const tipData = detectLaserTipUv(node.geometry)
-        if (tipData) {
-          if (this.data.autoDetectTip) {
-            centerX = tipData.tipUv.x
-            centerY = tipData.tipUv.y
-          }
-          if (this.data.autoOuterRadius && tipData.maxUvRadius > 0.0001) {
-            outerRadius = tipData.maxUvRadius
-          }
+        if (this.data.autoOuterRadius) {
+          outerRadius = computeOuterRadiusFromOrigin(node.geometry, originLocal)
         }
 
         node.material = new THREE.ShaderMaterial({
@@ -453,14 +445,14 @@ AFRAME.registerComponent('laser-surface', {
             uOpacity: {value: this.data.opacity},
             uIntensity: {value: this.data.intensity},
             uAlphaPower: {value: this.data.alphaPower},
-            uCenter: {value: new THREE.Vector2(centerX, centerY)},
+            uOrigin: {value: originLocal.clone()},
             uInnerRadius: {value: this.data.innerRadius},
             uOuterRadius: {value: outerRadius},
           },
           vertexShader: `
-            varying vec2 vUv;
+            varying vec3 vLocalPos;
             void main() {
-              vUv = uv;
+              vLocalPos = position;
               gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
           `,
@@ -470,13 +462,13 @@ AFRAME.registerComponent('laser-surface', {
             uniform float uOpacity;
             uniform float uIntensity;
             uniform float uAlphaPower;
-            uniform vec2 uCenter;
+            uniform vec3 uOrigin;
             uniform float uInnerRadius;
             uniform float uOuterRadius;
-            varying vec2 vUv;
+            varying vec3 vLocalPos;
 
             void main() {
-              float radius = distance(vUv, uCenter);
+              float radius = distance(vLocalPos, uOrigin);
               float t = clamp((radius - uInnerRadius) / max(0.0001, uOuterRadius - uInnerRadius), 0.0, 1.0);
               float fade = pow(1.0 - t, uAlphaPower);
               float core = smoothstep(0.45, 0.0, t);
