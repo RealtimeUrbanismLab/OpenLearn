@@ -9,18 +9,57 @@ import {initQRCode} from './qr-code'
 initQRCode()
 
 let envMapTexture = null
+let envMapPromise = null
 
-const getEnvMapTexture = () => {
-  if (envMapTexture) return envMapTexture
-  const imgEl = document.getElementById('hospital_env')
-  if (!imgEl || !imgEl.complete) return null
+const getEnvMapPath = () => {
+  const envAsset = document.getElementById('hospital_env')
+  return envAsset?.getAttribute('src') || 'assets/hospital_env.exr'
+}
 
-  const texture = new THREE.Texture(imgEl)
-  texture.mapping = THREE.EquirectangularReflectionMapping
-  texture.encoding = THREE.sRGBEncoding
-  texture.needsUpdate = true
-  envMapTexture = texture
-  return envMapTexture
+const loadEnvMapTexture = () => {
+  if (envMapTexture) return Promise.resolve(envMapTexture)
+  if (envMapPromise) return envMapPromise
+  if (!THREE.EXRLoader) {
+    return Promise.reject(new Error('THREE.EXRLoader is not available'))
+  }
+
+  envMapPromise = new Promise((resolve, reject) => {
+    const loader = new THREE.EXRLoader()
+    loader.load(
+      getEnvMapPath(),
+      (texture) => {
+        texture.mapping = THREE.EquirectangularReflectionMapping
+        texture.needsUpdate = true
+        envMapTexture = texture
+        resolve(texture)
+      },
+      undefined,
+      (error) => {
+        console.warn('Failed to load EXR environment map:', error)
+        envMapPromise = null
+        reject(error)
+      }
+    )
+  })
+
+  return envMapPromise
+}
+
+const applyEnvMapToMaterial = (material, intensity) => {
+  material.envMapIntensity = intensity
+
+  if (envMapTexture) {
+    material.envMap = envMapTexture
+    material.needsUpdate = true
+    return
+  }
+
+  loadEnvMapTexture()
+    .then((texture) => {
+      material.envMap = texture
+      material.needsUpdate = true
+    })
+    .catch(() => {})
 }
 
 // Register your existing components
@@ -141,9 +180,7 @@ AFRAME.registerComponent('slip-ring-assembly-metal', {
         node.material.metalness = 0.95
         node.material.roughness = 0.18
         node.material.emissive.set('#000000')
-        const envMap = getEnvMapTexture()
-        if (envMap) node.material.envMap = envMap
-        node.material.envMapIntensity = 2.2
+        applyEnvMapToMaterial(node.material, 2.2)
         node.material.needsUpdate = true
       })
     })
@@ -168,9 +205,7 @@ AFRAME.registerComponent('metallic', {
         node.material.metalness = 0.92
         node.material.roughness = 0.2
         node.material.emissive.set('#000000')
-        const envMap = getEnvMapTexture()
-        if (envMap) node.material.envMap = envMap
-        node.material.envMapIntensity = 2.4
+        applyEnvMapToMaterial(node.material, 2.4)
         node.material.needsUpdate = true
       })
     })
@@ -194,9 +229,7 @@ AFRAME.registerComponent('light-plastic', {
         node.material.color.set('#BBCEED')
         node.material.metalness = 0.0
         node.material.roughness = 0.45
-        const envMap = getEnvMapTexture()
-        if (envMap) node.material.envMap = envMap
-        node.material.envMapIntensity = 1.2
+        applyEnvMapToMaterial(node.material, 1.2)
         node.material.needsUpdate = true
       })
     })
@@ -220,9 +253,7 @@ AFRAME.registerComponent('med-plastic', {
         node.material.color.set('#465369')
         node.material.metalness = 0.0
         node.material.roughness = 0.45
-        const envMap = getEnvMapTexture()
-        if (envMap) node.material.envMap = envMap
-        node.material.envMapIntensity = 1.2
+        applyEnvMapToMaterial(node.material, 1.2)
         node.material.needsUpdate = true
       })
     })
@@ -246,9 +277,7 @@ AFRAME.registerComponent('dark-plastic', {
         node.material.color.set('#09090A')
         node.material.metalness = 0.0
         node.material.roughness = 0.45
-        const envMap = getEnvMapTexture()
-        if (envMap) node.material.envMap = envMap
-        node.material.envMapIntensity = 1.2
+        applyEnvMapToMaterial(node.material, 1.2)
         node.material.needsUpdate = true
       })
     })
@@ -270,9 +299,7 @@ AFRAME.registerComponent('fabric', {
         node.material.color.set('#C7C2B8')
         node.material.metalness = 0.0
         node.material.roughness = 0.9
-        const envMap = getEnvMapTexture()
-        if (envMap) node.material.envMap = envMap
-        node.material.envMapIntensity = 0.4
+        applyEnvMapToMaterial(node.material, 0.4)
         node.material.needsUpdate = true
       })
     })
