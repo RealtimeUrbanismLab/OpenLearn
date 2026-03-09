@@ -3,6 +3,11 @@ import {openPopup, closePopup} from './popup.js'
 import {updateButtonVisibility} from './next-button.js'
 
 const originalMaterials = new Map()
+const DIM_OPACITY = 0.3
+const DIM_COLOR_SCALE = 0.78
+const DIM_EMISSIVE_SCALE = 0.5
+const DIM_SHADER_OPACITY_SCALE = 0.7
+const DIM_SHADER_INTENSITY_SCALE = 0.78
 
 const getSafeColor = (material) => {
   if (material && material.color && material.color.isColor) return material.color.clone()
@@ -40,6 +45,9 @@ function cacheOriginalMaterials(modelElement) {
           : null,
         shaderInnerColor: getSafeShaderUniformColor(material.uniforms?.uInnerColor?.value, 0xff2a2a),
         shaderOuterColor: getSafeShaderUniformColor(material.uniforms?.uOuterColor?.value, 0x7a0000),
+        shaderIntensity: typeof material.uniforms?.uIntensity?.value === 'number'
+          ? material.uniforms.uIntensity.value
+          : null,
       })
     }
   })
@@ -67,6 +75,9 @@ export function setOpacity(modelElement, opacity, dimmed = false) {
           : null,
         shaderInnerColor: getSafeShaderUniformColor(material.uniforms?.uInnerColor?.value, 0xff2a2a),
         shaderOuterColor: getSafeShaderUniformColor(material.uniforms?.uOuterColor?.value, 0x7a0000),
+        shaderIntensity: typeof material.uniforms?.uIntensity?.value === 'number'
+          ? material.uniforms.uIntensity.value
+          : null,
       })
     }
     const original = originalMaterials.get(node)
@@ -77,24 +88,28 @@ export function setOpacity(modelElement, opacity, dimmed = false) {
       material.depthWrite = false
 
       if (material.color && material.color.isColor) {
-        material.color.copy(original.color).multiplyScalar(0.82)
+        material.color.copy(original.color).multiplyScalar(DIM_COLOR_SCALE)
       }
 
       if (material.emissive && material.emissive.isColor) {
-        material.emissive.copy(original.emissive).multiplyScalar(0.6)
-        material.emissiveIntensity = original.emissiveIntensity * 0.6
+        material.emissive.copy(original.emissive).multiplyScalar(DIM_EMISSIVE_SCALE)
+        material.emissiveIntensity = original.emissiveIntensity * DIM_EMISSIVE_SCALE
       }
 
       if (material.uniforms?.uOpacity && typeof original.shaderOpacity === 'number') {
-        material.uniforms.uOpacity.value = Math.min(opacity, original.shaderOpacity)
+        material.uniforms.uOpacity.value = original.shaderOpacity * DIM_SHADER_OPACITY_SCALE
       }
 
       if (material.uniforms?.uInnerColor?.value && material.uniforms.uInnerColor.value.isColor) {
-        material.uniforms.uInnerColor.value.copy(original.shaderInnerColor).multiplyScalar(0.82)
+        material.uniforms.uInnerColor.value.copy(original.shaderInnerColor).multiplyScalar(DIM_COLOR_SCALE)
       }
 
       if (material.uniforms?.uOuterColor?.value && material.uniforms.uOuterColor.value.isColor) {
-        material.uniforms.uOuterColor.value.copy(original.shaderOuterColor).multiplyScalar(0.82)
+        material.uniforms.uOuterColor.value.copy(original.shaderOuterColor).multiplyScalar(DIM_COLOR_SCALE)
+      }
+
+      if (material.uniforms?.uIntensity && typeof original.shaderIntensity === 'number') {
+        material.uniforms.uIntensity.value = original.shaderIntensity * DIM_SHADER_INTENSITY_SCALE
       }
     } else {
       material.transparent = original.transparent
@@ -122,6 +137,10 @@ export function setOpacity(modelElement, opacity, dimmed = false) {
       if (material.uniforms?.uOuterColor?.value && material.uniforms.uOuterColor.value.isColor) {
         material.uniforms.uOuterColor.value.copy(original.shaderOuterColor)
       }
+
+      if (material.uniforms?.uIntensity && typeof original.shaderIntensity === 'number') {
+        material.uniforms.uIntensity.value = original.shaderIntensity
+      }
     }
 
     material.needsUpdate = true
@@ -133,7 +152,7 @@ export function updateModelVisibility(selectedModelId) {
     if (el.id === selectedModelId) {
       setOpacity(el, 1, false)
     } else {
-      setOpacity(el, 0.35, true)
+      setOpacity(el, DIM_OPACITY, true)
     }
   })
 }
@@ -167,6 +186,10 @@ export function resetModelOpacity() {
 
     if (material.uniforms?.uOuterColor?.value && material.uniforms.uOuterColor.value.isColor) {
       material.uniforms.uOuterColor.value.copy(mat.shaderOuterColor)
+    }
+
+    if (material.uniforms?.uIntensity && typeof mat.shaderIntensity === 'number') {
+      material.uniforms.uIntensity.value = mat.shaderIntensity
     }
 
     material.needsUpdate = true
