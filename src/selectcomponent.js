@@ -182,8 +182,8 @@ export function updateModelVisibility(selectedModelId) {
 
     if (el.id === selectedModelId) {
       setOpacity(el, 1, false)
-    } else if (!isLaserSelected && isLaserEntity(el.id)) {
-      // Hidden unless laser positioning lights are selected
+    } else if (!isLaserSelected && isLaserSurface) {
+      // Hidden laser surfaces are excluded from dimming when lasers are off
       setOpacity(el, 1, false)
     } else if (isLaserSurface) {
       setOpacity(el, LASER_DIM_OPACITY, true, {
