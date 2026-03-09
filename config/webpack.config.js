@@ -86,7 +86,6 @@ const config = {
       templateContent: indexTemplateContent,
       filename: 'index.html',
       inject: false,
-      buildVersion: Date.now(),
     }),
     new CopyWebpackPlugin({
       patterns: [
