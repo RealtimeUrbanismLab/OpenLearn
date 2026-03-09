@@ -275,10 +275,11 @@ AFRAME.registerComponent('enable-interaction-and-gestures', {
 // Clamp the group position to prevent sudden jumps out of view
 AFRAME.registerComponent('clamp-group', {
   schema: {
-    maxDistance: {type: 'number', default: 6},
-    minDistance: {type: 'number', default: 0.5},
-    maxYOffset: {type: 'number', default: 2},
-    minYOffset: {type: 'number', default: -2},
+    maxDistance: {type: 'number', default: 25},
+    minDistance: {type: 'number', default: 0},
+    maxYOffset: {type: 'number', default: 8},
+    minYOffset: {type: 'number', default: -12},
+    minClampDelta: {type: 'number', default: 0.12},
   },
   init() {
     this.camera = this.el.sceneEl.querySelector('#camera')
@@ -292,20 +293,24 @@ AFRAME.registerComponent('clamp-group', {
     const dz = groupPos.z - camPos.z
     const dist = Math.sqrt(dx * dx + dz * dz)
 
-    if (dist > this.data.maxDistance && dist > 0) {
+    if (this.data.maxDistance > 0 && dist > this.data.maxDistance && dist > 0) {
       const scale = this.data.maxDistance / dist
-      groupPos.x = camPos.x + dx * scale
-      groupPos.z = camPos.z + dz * scale
-    } else if (dist < this.data.minDistance && dist > 0) {
+      const targetX = camPos.x + dx * scale
+      const targetZ = camPos.z + dz * scale
+      if (Math.abs(groupPos.x - targetX) > this.data.minClampDelta) groupPos.x = targetX
+      if (Math.abs(groupPos.z - targetZ) > this.data.minClampDelta) groupPos.z = targetZ
+    } else if (this.data.minDistance > 0 && dist < this.data.minDistance && dist > 0) {
       const scale = this.data.minDistance / dist
-      groupPos.x = camPos.x + dx * scale
-      groupPos.z = camPos.z + dz * scale
+      const targetX = camPos.x + dx * scale
+      const targetZ = camPos.z + dz * scale
+      if (Math.abs(groupPos.x - targetX) > this.data.minClampDelta) groupPos.x = targetX
+      if (Math.abs(groupPos.z - targetZ) > this.data.minClampDelta) groupPos.z = targetZ
     }
 
     const minY = camPos.y + this.data.minYOffset
     const maxY = camPos.y + this.data.maxYOffset
-    if (groupPos.y < minY) groupPos.y = minY
-    if (groupPos.y > maxY) groupPos.y = maxY
+    if (groupPos.y < minY && Math.abs(groupPos.y - minY) > this.data.minClampDelta) groupPos.y = minY
+    if (groupPos.y > maxY && Math.abs(groupPos.y - maxY) > this.data.minClampDelta) groupPos.y = maxY
   },
 })
 
