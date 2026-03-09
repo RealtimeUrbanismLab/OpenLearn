@@ -22,20 +22,22 @@ const initTransformLockModes = () => {
   let lockFrameId = null
   let fixedTransform = null
 
-  const ensureGestureComponents = () => {
+  const syncGestureComponents = () => {
     if (!group.hasAttribute('xrextras-gesture-detector')) {
       group.setAttribute('xrextras-gesture-detector', '')
     }
 
-    if (!group.hasAttribute('xrextras-two-finger-rotate')) {
+    if (isFixInPlaceEnabled) {
+      group.removeAttribute('xrextras-two-finger-rotate')
+      group.removeAttribute('xrextras-hold-drag')
+    } else {
       group.setAttribute('xrextras-two-finger-rotate', '')
-    }
-
-    if (!group.hasAttribute('xrextras-hold-drag')) {
       group.setAttribute('xrextras-hold-drag', 'rise-height: 0')
     }
 
-    if (!group.hasAttribute('xrextras-pinch-scale')) {
+    if (isRealScaleEnabled) {
+      group.removeAttribute('xrextras-pinch-scale')
+    } else {
       group.setAttribute('xrextras-pinch-scale', '')
     }
   }
@@ -83,6 +85,7 @@ const initTransformLockModes = () => {
       group.object3D.scale.copy(trueScale)
     }
 
+    syncGestureComponents()
     updateLockLoop()
   }
 
@@ -97,6 +100,7 @@ const initTransformLockModes = () => {
       }
     }
 
+    syncGestureComponents()
     updateLockLoop()
   }
 
@@ -113,11 +117,11 @@ const initTransformLockModes = () => {
   })
 
   scene.addEventListener('xrstart', () => {
-    ensureGestureComponents()
+    syncGestureComponents()
     applyLocks()
   })
 
-  ensureGestureComponents()
+  syncGestureComponents()
 }
 
 if (document.readyState === 'loading') {
