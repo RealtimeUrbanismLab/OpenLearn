@@ -140,13 +140,36 @@ export function updateModelVisibility(selectedModelId) {
 
 export function resetModelOpacity() {
   originalMaterials.forEach((mat, node) => {
-    node.material.transparent = mat.transparent
-    node.material.opacity = mat.opacity
-    node.material.color.copy(mat.color)
-    if (node.material.emissive) {
-      node.material.emissive.copy(mat.emissive)
-      node.material.emissiveIntensity = mat.emissiveIntensity
+    const material = node.material
+    if (!material) return
+
+    material.transparent = mat.transparent
+    material.opacity = mat.opacity
+    material.depthWrite = mat.depthWrite
+    material.depthTest = mat.depthTest
+
+    if (material.color && material.color.isColor) {
+      material.color.copy(mat.color)
     }
+
+    if (material.emissive && material.emissive.isColor) {
+      material.emissive.copy(mat.emissive)
+      material.emissiveIntensity = mat.emissiveIntensity
+    }
+
+    if (material.uniforms?.uOpacity && typeof mat.shaderOpacity === 'number') {
+      material.uniforms.uOpacity.value = mat.shaderOpacity
+    }
+
+    if (material.uniforms?.uInnerColor?.value && material.uniforms.uInnerColor.value.isColor) {
+      material.uniforms.uInnerColor.value.copy(mat.shaderInnerColor)
+    }
+
+    if (material.uniforms?.uOuterColor?.value && material.uniforms.uOuterColor.value.isColor) {
+      material.uniforms.uOuterColor.value.copy(mat.shaderOuterColor)
+    }
+
+    material.needsUpdate = true
   })
 }
 
