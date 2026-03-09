@@ -8,6 +8,9 @@ const DIM_COLOR_SCALE = 0.78
 const DIM_EMISSIVE_SCALE = 0.5
 const DIM_SHADER_OPACITY_SCALE = 0.7
 const DIM_SHADER_INTENSITY_SCALE = 0.78
+const LASER_DIM_OPACITY = 0.2
+const LASER_DIM_SHADER_OPACITY_SCALE = 0.45
+const LASER_DIM_SHADER_INTENSITY_SCALE = 0.55
 
 const getSafeColor = (material) => {
   if (material && material.color && material.color.isColor) return material.color.clone()
@@ -54,7 +57,7 @@ function cacheOriginalMaterials(modelElement) {
 }
 
 
-export function setOpacity(modelElement, opacity, dimmed = false) {
+export function setOpacity(modelElement, opacity, dimmed = false, dimProfile = {}) {
   const mesh = modelElement.getObject3D('mesh')
   if (!mesh) return
   mesh.traverse((node) => {
@@ -83,33 +86,38 @@ export function setOpacity(modelElement, opacity, dimmed = false) {
     const original = originalMaterials.get(node)
 
     if (dimmed) {
+      const colorScale = typeof dimProfile.colorScale === 'number' ? dimProfile.colorScale : DIM_COLOR_SCALE
+      const emissiveScale = typeof dimProfile.emissiveScale === 'number' ? dimProfile.emissiveScale : DIM_EMISSIVE_SCALE
+      const shaderOpacityScale = typeof dimProfile.shaderOpacityScale === 'number' ? dimProfile.shaderOpacityScale : DIM_SHADER_OPACITY_SCALE
+      const shaderIntensityScale = typeof dimProfile.shaderIntensityScale === 'number' ? dimProfile.shaderIntensityScale : DIM_SHADER_INTENSITY_SCALE
+
       material.transparent = true
       material.opacity = Math.min(opacity, original.opacity)
       material.depthWrite = false
 
       if (material.color && material.color.isColor) {
-        material.color.copy(original.color).multiplyScalar(DIM_COLOR_SCALE)
+        material.color.copy(original.color).multiplyScalar(colorScale)
       }
 
       if (material.emissive && material.emissive.isColor) {
-        material.emissive.copy(original.emissive).multiplyScalar(DIM_EMISSIVE_SCALE)
-        material.emissiveIntensity = original.emissiveIntensity * DIM_EMISSIVE_SCALE
+        material.emissive.copy(original.emissive).multiplyScalar(emissiveScale)
+        material.emissiveIntensity = original.emissiveIntensity * emissiveScale
       }
 
       if (material.uniforms?.uOpacity && typeof original.shaderOpacity === 'number') {
-        material.uniforms.uOpacity.value = original.shaderOpacity * DIM_SHADER_OPACITY_SCALE
+        material.uniforms.uOpacity.value = original.shaderOpacity * shaderOpacityScale
       }
 
       if (material.uniforms?.uInnerColor?.value && material.uniforms.uInnerColor.value.isColor) {
-        material.uniforms.uInnerColor.value.copy(original.shaderInnerColor).multiplyScalar(DIM_COLOR_SCALE)
+        material.uniforms.uInnerColor.value.copy(original.shaderInnerColor).multiplyScalar(colorScale)
       }
 
       if (material.uniforms?.uOuterColor?.value && material.uniforms.uOuterColor.value.isColor) {
-        material.uniforms.uOuterColor.value.copy(original.shaderOuterColor).multiplyScalar(DIM_COLOR_SCALE)
+        material.uniforms.uOuterColor.value.copy(original.shaderOuterColor).multiplyScalar(colorScale)
       }
 
       if (material.uniforms?.uIntensity && typeof original.shaderIntensity === 'number') {
-        material.uniforms.uIntensity.value = original.shaderIntensity * DIM_SHADER_INTENSITY_SCALE
+        material.uniforms.uIntensity.value = original.shaderIntensity * shaderIntensityScale
       }
     } else {
       material.transparent = original.transparent
@@ -148,9 +156,20 @@ export function setOpacity(modelElement, opacity, dimmed = false) {
 }
 
 export function updateModelVisibility(selectedModelId) {
+  const isLaserSelected = selectedModelId === 'laser_positioning_lights'
+
   document.querySelectorAll('[gltf-model]').forEach((el) => {
+    const isLaserSurface = el.id === 'laser_surface_1' || el.id === 'laser_surface_2' || el.id === 'laser_surface_3'
+
     if (el.id === selectedModelId) {
       setOpacity(el, 1, false)
+    } else if (isLaserSelected && isLaserSurface) {
+      setOpacity(el, 1, false)
+    } else if (isLaserSurface) {
+      setOpacity(el, LASER_DIM_OPACITY, true, {
+        shaderOpacityScale: LASER_DIM_SHADER_OPACITY_SCALE,
+        shaderIntensityScale: LASER_DIM_SHADER_INTENSITY_SCALE,
+      })
     } else {
       setOpacity(el, DIM_OPACITY, true)
     }
