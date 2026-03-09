@@ -8,6 +8,99 @@ import {initQRCode} from './qr-code'
 // Initialize QR code for desktop users
 initQRCode()
 
+const initRealScaleMode = () => {
+  const button = document.getElementById('real-scale-button')
+  const scene = document.querySelector('a-scene')
+  const group = document.getElementById('group')
+
+  if (!button || !scene || !group) return
+
+  let isRealScaleEnabled = false
+  let lockFrameId = null
+  let lockedTransform = null
+
+  const setGestureInteractivity = (enabled) => {
+    if (enabled) {
+      if (!group.hasAttribute('xrextras-gesture-detector')) {
+        group.setAttribute('xrextras-gesture-detector', '')
+      }
+      group.setAttribute('xrextras-two-finger-rotate', '')
+      group.setAttribute('xrextras-pinch-scale', '')
+      group.setAttribute('xrextras-hold-drag', 'rise-height: 0')
+      return
+    }
+
+    group.removeAttribute('xrextras-two-finger-rotate')
+    group.removeAttribute('xrextras-pinch-scale')
+    group.removeAttribute('xrextras-hold-drag')
+  }
+
+  const applyLockedTransform = () => {
+    if (!isRealScaleEnabled || !lockedTransform) return
+    group.object3D.position.copy(lockedTransform.position)
+    group.object3D.quaternion.copy(lockedTransform.quaternion)
+    group.object3D.scale.copy(lockedTransform.scale)
+  }
+
+  const startLockLoop = () => {
+    const tick = () => {
+      applyLockedTransform()
+      if (isRealScaleEnabled) {
+        lockFrameId = requestAnimationFrame(tick)
+      }
+    }
+    lockFrameId = requestAnimationFrame(tick)
+  }
+
+  const stopLockLoop = () => {
+    if (lockFrameId !== null) {
+      cancelAnimationFrame(lockFrameId)
+      lockFrameId = null
+    }
+  }
+
+  const setRealScaleMode = (enabled) => {
+    isRealScaleEnabled = enabled
+
+    if (enabled) {
+      lockedTransform = {
+        position: group.object3D.position.clone(),
+        quaternion: group.object3D.quaternion.clone(),
+        scale: group.object3D.scale.clone(),
+      }
+      setGestureInteractivity(false)
+      stopLockLoop()
+      startLockLoop()
+      button.classList.add('active')
+      button.textContent = 'Real Scale On'
+      return
+    }
+
+    stopLockLoop()
+    setGestureInteractivity(true)
+    button.classList.remove('active')
+    button.textContent = 'Real Scale'
+  }
+
+  button.addEventListener('click', (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    setRealScaleMode(!isRealScaleEnabled)
+  })
+
+  scene.addEventListener('xrstart', () => {
+    if (isRealScaleEnabled) {
+      applyLockedTransform()
+    }
+  })
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initRealScaleMode)
+} else {
+  initRealScaleMode()
+}
+
 let envMapTexture = null
 let envMapPromise = null
 
