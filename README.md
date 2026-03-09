@@ -20,7 +20,7 @@ devServer: {
 ```
 
 ### Publishing
-Run `npm run build` to generate a production build. The resulting build will be in `dist/`. You can host this bundle on any web server you want.
+Run `npm run build` to generate a production build. The resulting build will be in `docs/` for GitHub Pages (`main` branch, `/docs` folder).
 
 ### Project Overview
 - `src/`: Contains all your original project code and assets.

@@ -4,7 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 const rootPath = process.cwd()
-const distPath = path.join(rootPath, 'dist')
+const outputPath = path.join(rootPath, 'docs')
 const srcPath = path.join(rootPath, 'src')
 
 const indexTemplateContent = fs.readFileSync(path.join(srcPath, 'index.html'), 'utf8').replace("<%- htmlWebpackPlugin.options.bodyHtml %>", fs.readFileSync(path.join(srcPath, 'body.html'), 'utf8'))
@@ -78,7 +78,7 @@ const config = {
   entry: path.join(srcPath, 'app.js'),
   output: {
     filename: 'bundle.js',
-    path: distPath,
+    path: outputPath,
     publicPath: 'auto',
   },
   plugins: [
@@ -91,17 +91,17 @@ const config = {
       patterns: [
         {
           from: path.join(rootPath, 'external'),
-          to: path.join(distPath, 'external'),
+          to: path.join(outputPath, 'external'),
           noErrorOnMissing: true,
         },
         {
           from: path.join(srcPath, 'assets'),
-          to: path.join(distPath, 'assets'),
+          to: path.join(outputPath, 'assets'),
           noErrorOnMissing: true,
         },
         {
           from: path.join(rootPath, 'image-targets'),
-          to: path.join(distPath, 'image-targets'),
+          to: path.join(outputPath, 'image-targets'),
           noErrorOnMissing: true,
         },
       ],
