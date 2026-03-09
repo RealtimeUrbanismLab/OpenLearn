@@ -123,12 +123,13 @@ a {
 
 .button-container {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  gap: 3vw;
+  gap: 0;
   padding: 1.5vh 0;
   pointer-events: auto;
   flex-shrink: 0;
+  width: 100%;
 }
 
 #nextbutton,
@@ -310,7 +311,7 @@ a {
   .button-container {
     position: relative;
     margin-top: 1.5vh;
-    gap: 10px;
+    gap: 0;
   }
 
   #nextbutton,

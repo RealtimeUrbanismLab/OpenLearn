@@ -8,8 +8,17 @@ const updateButtonVisibility = () => {
   const backButton = document.getElementById('backbutton')
   const currentIndex = getSelectedIndex()
 
-  if (backButton) backButton.style.display = currentIndex > 0 ? 'block' : 'none'
-  if (nextButton) nextButton.style.display = currentIndex < modelDescriptions.length - 1 ? 'block' : 'none'
+  if (backButton) {
+    backButton.style.display = 'block'
+    backButton.style.visibility = currentIndex > 0 ? 'visible' : 'hidden'
+    backButton.style.pointerEvents = currentIndex > 0 ? 'auto' : 'none'
+  }
+
+  if (nextButton) {
+    nextButton.style.display = 'block'
+    nextButton.style.visibility = currentIndex < modelDescriptions.length - 1 ? 'visible' : 'hidden'
+    nextButton.style.pointerEvents = currentIndex < modelDescriptions.length - 1 ? 'auto' : 'none'
+  }
 }
 
 const nextButtonComponent = () => ({
