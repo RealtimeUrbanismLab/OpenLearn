@@ -14,6 +14,11 @@ const getSafeEmissive = (material) => {
   return new THREE.Color(0x000000)
 }
 
+const getSafeShaderUniformColor = (uniformValue, fallbackColor) => {
+  if (uniformValue && uniformValue.isColor) return uniformValue.clone()
+  return new THREE.Color(fallbackColor)
+}
+
 function cacheOriginalMaterials(modelElement) {
   const mesh = modelElement.getObject3D('mesh')
   if (!mesh) return
@@ -25,16 +30,23 @@ function cacheOriginalMaterials(modelElement) {
       originalMaterials.set(node, {
         transparent: material.transparent,
         opacity: typeof material.opacity === 'number' ? material.opacity : 1,
+        depthWrite: material.depthWrite,
+        depthTest: material.depthTest,
         color: getSafeColor(material),
         emissive: getSafeEmissive(material),
         emissiveIntensity: material.emissiveIntensity || 0,
+        shaderOpacity: typeof material.uniforms?.uOpacity?.value === 'number'
+          ? material.uniforms.uOpacity.value
+          : null,
+        shaderInnerColor: getSafeShaderUniformColor(material.uniforms?.uInnerColor?.value, 0xff2a2a),
+        shaderOuterColor: getSafeShaderUniformColor(material.uniforms?.uOuterColor?.value, 0x7a0000),
       })
     }
   })
 }
 
 
-export function setOpacity(modelElement, opacity, highlight = false) {
+export function setOpacity(modelElement, opacity, dimmed = false) {
   const mesh = modelElement.getObject3D('mesh')
   if (!mesh) return
   mesh.traverse((node) => {
@@ -45,44 +57,83 @@ export function setOpacity(modelElement, opacity, highlight = false) {
       originalMaterials.set(node, {
         transparent: material.transparent,
         opacity: typeof material.opacity === 'number' ? material.opacity : 1,
+        depthWrite: material.depthWrite,
+        depthTest: material.depthTest,
         color: getSafeColor(material),
         emissive: getSafeEmissive(material),
         emissiveIntensity: material.emissiveIntensity || 0,
+        shaderOpacity: typeof material.uniforms?.uOpacity?.value === 'number'
+          ? material.uniforms.uOpacity.value
+          : null,
+        shaderInnerColor: getSafeShaderUniformColor(material.uniforms?.uInnerColor?.value, 0xff2a2a),
+        shaderOuterColor: getSafeShaderUniformColor(material.uniforms?.uOuterColor?.value, 0x7a0000),
       })
     }
-    material.transparent = false
-    material.opacity = opacity
-    material.depthWrite = true
-    if (highlight) {
-      // Keep original color, only add emissive glow
+    const original = originalMaterials.get(node)
+
+    if (dimmed) {
+      material.transparent = true
+      material.opacity = Math.min(opacity, original.opacity)
+      material.depthWrite = false
+
       if (material.color && material.color.isColor) {
-        material.color.copy(originalMaterials.get(node).color)
+        material.color.copy(original.color).multiplyScalar(0.82)
       }
+
       if (material.emissive && material.emissive.isColor) {
-        material.emissive.set(0x00ff00)
-        material.emissiveIntensity = 0.4
+        material.emissive.copy(original.emissive).multiplyScalar(0.6)
+        material.emissiveIntensity = original.emissiveIntensity * 0.6
+      }
+
+      if (material.uniforms?.uOpacity && typeof original.shaderOpacity === 'number') {
+        material.uniforms.uOpacity.value = Math.min(opacity, original.shaderOpacity)
+      }
+
+      if (material.uniforms?.uInnerColor?.value && material.uniforms.uInnerColor.value.isColor) {
+        material.uniforms.uInnerColor.value.copy(original.shaderInnerColor).multiplyScalar(0.82)
+      }
+
+      if (material.uniforms?.uOuterColor?.value && material.uniforms.uOuterColor.value.isColor) {
+        material.uniforms.uOuterColor.value.copy(original.shaderOuterColor).multiplyScalar(0.82)
       }
     } else {
+      material.transparent = original.transparent
+      material.opacity = original.opacity
+      material.depthWrite = original.depthWrite
+      material.depthTest = original.depthTest
+
       if (material.color && material.color.isColor) {
-        material.color.copy(originalMaterials.get(node).color)
+        material.color.copy(original.color)
       }
-      // Reset emissive for unselected components
+
       if (material.emissive && material.emissive.isColor) {
-        material.emissive.copy(originalMaterials.get(node).emissive)
-        material.emissiveIntensity = originalMaterials.get(node).emissiveIntensity
+        material.emissive.copy(original.emissive)
+        material.emissiveIntensity = original.emissiveIntensity
+      }
+
+      if (material.uniforms?.uOpacity && typeof original.shaderOpacity === 'number') {
+        material.uniforms.uOpacity.value = original.shaderOpacity
+      }
+
+      if (material.uniforms?.uInnerColor?.value && material.uniforms.uInnerColor.value.isColor) {
+        material.uniforms.uInnerColor.value.copy(original.shaderInnerColor)
+      }
+
+      if (material.uniforms?.uOuterColor?.value && material.uniforms.uOuterColor.value.isColor) {
+        material.uniforms.uOuterColor.value.copy(original.shaderOuterColor)
       }
     }
+
+    material.needsUpdate = true
   })
 }
 
 export function updateModelVisibility(selectedModelId) {
-  document.querySelectorAll('.cantap').forEach((el) => {
+  document.querySelectorAll('[gltf-model]').forEach((el) => {
     if (el.id === selectedModelId) {
-      setOpacity(el, 1, true)
-    } else if (el.id === 'xray_tube') {
-      setOpacity(el, 1)
+      setOpacity(el, 1, false)
     } else {
-      setOpacity(el, 1)
+      setOpacity(el, 0.35, true)
     }
   })
 }
