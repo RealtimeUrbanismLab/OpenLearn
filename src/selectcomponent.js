@@ -189,13 +189,17 @@ export function setOpacity(modelElement, opacity, dimmed = false, highlight = fa
       material.depthTest = original.depthTest
 
       if (material.color && material.color.isColor) {
-        material.color.copy(original.color)
+        if (highlight) {
+          material.color.set(0xcc1111)
+        } else {
+          material.color.copy(original.color)
+        }
       }
 
       if (material.emissive && material.emissive.isColor) {
         if (highlight) {
-          material.emissive.set(0x4488ff)
-          material.emissiveIntensity = 0.4
+          material.emissive.set(0x330000)
+          material.emissiveIntensity = 0.2
         } else {
           material.emissive.copy(original.emissive)
           material.emissiveIntensity = original.emissiveIntensity
