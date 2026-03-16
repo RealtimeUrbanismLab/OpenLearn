@@ -4,14 +4,34 @@ import {updateButtonVisibility} from './next-button.js'
 
 const originalMaterials = new Map()
 
-// ── Outline (backface-expansion) ────────────────────────────────────────────
-const OUTLINE_SCALE = 1.04
-const outlineMaterial = new THREE.MeshBasicMaterial({
-  color: 0xffffff,
+// ── Outline (screen-space silhouette stroke) ────────────────────────────────
+// Vertices are offset along their clip-space normal direction by a fixed
+// NDC amount, so the stroke is a uniform flat 2D ring around the silhouette.
+const OUTLINE_THICKNESS = 0.005
+const outlineMaterial = new THREE.ShaderMaterial({
+  uniforms: {
+    outlineThickness: { value: OUTLINE_THICKNESS },
+  },
+  vertexShader: /* glsl */`
+    uniform float outlineThickness;
+    void main() {
+      vec4 clipPos = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      vec3 viewNormal = normalize(normalMatrix * normal);
+      vec2 n = viewNormal.xy;
+      float len = length(n);
+      vec2 screenOffset = (len > 0.0001) ? (n / len) : vec2(0.0, 1.0);
+      clipPos.xy += screenOffset * outlineThickness * clipPos.w;
+      gl_Position = clipPos;
+    }
+  `,
+  fragmentShader: /* glsl */`
+    void main() {
+      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    }
+  `,
   side: THREE.BackSide,
   depthTest: true,
   depthWrite: false,
-  transparent: false,
 })
 
 function addOutlines(modelElement) {
@@ -23,7 +43,6 @@ function addOutlines(modelElement) {
     if (!node.geometry) return
     if (node.children.some((c) => c._isOutline)) return // already added
     const outline = new THREE.Mesh(node.geometry, outlineMaterial)
-    outline.scale.setScalar(OUTLINE_SCALE)
     outline._isOutline = true
     outline.renderOrder = node.renderOrder - 1
     node.add(outline)
