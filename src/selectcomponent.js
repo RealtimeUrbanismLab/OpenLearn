@@ -233,8 +233,8 @@ export const selectComponent = {
     const offscreenBanner = document.getElementById('offscreen-status-banner')
     const tempWorldPos = new THREE.Vector3()
     const tempNDC = new THREE.Vector3()
-    const tempProjectionMatrix = new THREE.Matrix4()
-    const tempFrustum = new THREE.Frustum()
+    const tempBox = new THREE.Box3()
+    const boxCorners = Array.from({length: 8}, () => new THREE.Vector3())
     let locked = false
 
     const getSelectedTitle = (modelId) => {
@@ -271,12 +271,39 @@ export const selectComponent = {
       if (!camera) return false
 
       camera.updateMatrixWorld(true)
+      selectedModel.object3D.updateMatrixWorld(true)
 
       const mesh = selectedModel.getObject3D('mesh')
       if (mesh) {
-        tempProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
-        tempFrustum.setFromProjectionMatrix(tempProjectionMatrix)
-        return !tempFrustum.intersectsObject(mesh)
+        tempBox.setFromObject(mesh)
+        if (!tempBox.isEmpty()) {
+          const {min, max} = tempBox
+          boxCorners[0].set(min.x, min.y, min.z)
+          boxCorners[1].set(max.x, min.y, min.z)
+          boxCorners[2].set(min.x, max.y, min.z)
+          boxCorners[3].set(max.x, max.y, min.z)
+          boxCorners[4].set(min.x, min.y, max.z)
+          boxCorners[5].set(max.x, min.y, max.z)
+          boxCorners[6].set(min.x, max.y, max.z)
+          boxCorners[7].set(max.x, max.y, max.z)
+
+          let allLeft = true
+          let allRight = true
+          let allAbove = true
+          let allBelow = true
+          let allBehind = true
+
+          boxCorners.forEach((corner) => {
+            tempNDC.copy(corner).project(camera)
+            if (tempNDC.x >= -1.02) allLeft = false
+            if (tempNDC.x <= 1.02) allRight = false
+            if (tempNDC.y <= 1.02) allAbove = false
+            if (tempNDC.y >= -1.02) allBelow = false
+            if (tempNDC.z <= 1) allBehind = false
+          })
+
+          return allLeft || allRight || allAbove || allBelow || allBehind
+        }
       }
 
       selectedModel.object3D.getWorldPosition(tempWorldPos)
