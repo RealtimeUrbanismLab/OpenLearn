@@ -69,7 +69,7 @@ function cacheOriginalMaterials(modelElement) {
 }
 
 
-export function setOpacity(modelElement, opacity, dimmed = false, dimProfile = {}) {
+export function setOpacity(modelElement, opacity, dimmed = false, dimProfile = {}, highlight = false) {
   const mesh = modelElement.getObject3D('mesh')
   if (!mesh) return
   mesh.traverse((node) => {
@@ -142,8 +142,13 @@ export function setOpacity(modelElement, opacity, dimmed = false, dimProfile = {
       }
 
       if (material.emissive && material.emissive.isColor) {
-        material.emissive.copy(original.emissive)
-        material.emissiveIntensity = original.emissiveIntensity
+        if (highlight) {
+          material.emissive.set(0x4488ff)
+          material.emissiveIntensity = 0.4
+        } else {
+          material.emissive.copy(original.emissive)
+          material.emissiveIntensity = original.emissiveIntensity
+        }
       }
 
       if (material.uniforms?.uOpacity && typeof original.shaderOpacity === 'number') {
@@ -181,7 +186,7 @@ export function updateModelVisibility(selectedModelId) {
     const isLaserSurface = el.id === 'laser_surface_1' || el.id === 'laser_surface_2' || el.id === 'laser_surface_3'
 
     if (el.id === selectedModelId) {
-      setOpacity(el, 1, false)
+      setOpacity(el, 1, false, {}, true)
     } else if (!isLaserSelected && isLaserSurface) {
       // Hidden laser surfaces are excluded from dimming when lasers are off
       setOpacity(el, 1, false)

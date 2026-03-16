@@ -21,36 +21,93 @@ body {
   display: none;
 }
 
-#real-scale-button,
-#fix-in-place-button {
+.mode-toggle-row {
   position: fixed;
   left: 12px;
   z-index: 10002;
   pointer-events: auto;
   touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   background-color: #000000;
   color: #ffffff;
   border: none;
   border-radius: 999px;
-  padding: 10px 14px;
-  width: 142px;
-  font-size: 0.8em;
-  font-weight: 700;
-  text-transform: uppercase;
-  text-align: center;
+  padding: 8px 12px;
+  width: 168px;
 }
 
-#real-scale-button {
+.mode-toggle-label {
+  font-size: 0.72em;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+#dynamic-scale-row {
   top: 12px;
 }
 
-#fix-in-place-button {
+#dynamic-rotation-row {
   top: 56px;
 }
 
-#real-scale-button.active,
-#fix-in-place-button.active {
+.mode-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+#real-scale-button,
+#fix-in-place-button {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.mode-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #555555;
+  border-radius: 999px;
+  transition: background-color 0.2s ease;
+}
+
+.mode-toggle-slider::before {
+  position: absolute;
+  content: '';
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  top: 3px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+#real-scale-button:checked + .mode-toggle-slider,
+#fix-in-place-button:checked + .mode-toggle-slider {
   background-color: #2f6df6;
+}
+
+#real-scale-button:checked + .mode-toggle-slider::before,
+#fix-in-place-button:checked + .mode-toggle-slider::before {
+  transform: translateX(18px);
+}
+
+#real-scale-button:focus-visible + .mode-toggle-slider,
+#fix-in-place-button:focus-visible + .mode-toggle-slider {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
 }
 
 #rotate-button:active {

@@ -9,16 +9,16 @@ import {initQRCode} from './qr-code'
 initQRCode()
 
 const initTransformLockModes = () => {
-  const realScaleButton = document.getElementById('real-scale-button')
-  const fixInPlaceButton = document.getElementById('fix-in-place-button')
+  const realScaleToggle = document.getElementById('real-scale-button')
+  const fixInPlaceToggle = document.getElementById('fix-in-place-button')
   const scene = document.querySelector('a-scene')
   const group = document.getElementById('group')
 
-  if (!realScaleButton || !fixInPlaceButton || !scene || !group) return
+  if (!realScaleToggle || !fixInPlaceToggle || !scene || !group) return
 
   const trueScale = group.object3D.scale.clone().multiplyScalar(2.2)
-  let isRealScaleEnabled = false
-  let isFixInPlaceEnabled = false
+  let isDynamicScaleEnabled = false
+  let isDynamicRotationEnabled = false
   let lockFrameId = null
   let fixedTransform = null
 
@@ -27,27 +27,27 @@ const initTransformLockModes = () => {
       group.setAttribute('xrextras-gesture-detector', '')
     }
 
-    if (isFixInPlaceEnabled) {
-      group.removeAttribute('xrextras-two-finger-rotate')
-      group.removeAttribute('xrextras-hold-drag')
-    } else {
+    if (isDynamicRotationEnabled) {
       group.setAttribute('xrextras-two-finger-rotate', '')
       group.setAttribute('xrextras-hold-drag', 'rise-height: 0')
+    } else {
+      group.removeAttribute('xrextras-two-finger-rotate')
+      group.removeAttribute('xrextras-hold-drag')
     }
 
-    if (isRealScaleEnabled) {
-      group.removeAttribute('xrextras-pinch-scale')
-    } else {
+    if (isDynamicScaleEnabled) {
       group.setAttribute('xrextras-pinch-scale', '')
+    } else {
+      group.removeAttribute('xrextras-pinch-scale')
     }
   }
 
   const applyLocks = () => {
-    if (isRealScaleEnabled) {
+    if (!isDynamicScaleEnabled) {
       group.object3D.scale.copy(trueScale)
     }
 
-    if (isFixInPlaceEnabled && fixedTransform) {
+    if (!isDynamicRotationEnabled && fixedTransform) {
       group.object3D.position.copy(fixedTransform.position)
       group.object3D.quaternion.copy(fixedTransform.quaternion)
     }
@@ -56,7 +56,7 @@ const initTransformLockModes = () => {
   const startLockLoop = () => {
     const tick = () => {
       applyLocks()
-      if (isRealScaleEnabled || isFixInPlaceEnabled) {
+      if (!isDynamicScaleEnabled || !isDynamicRotationEnabled) {
         lockFrameId = requestAnimationFrame(tick)
       }
     }
@@ -72,16 +72,16 @@ const initTransformLockModes = () => {
 
   const updateLockLoop = () => {
     stopLockLoop()
-    if (isRealScaleEnabled || isFixInPlaceEnabled) {
+    if (!isDynamicScaleEnabled || !isDynamicRotationEnabled) {
       startLockLoop()
     }
   }
 
-  const setRealScaleMode = (enabled) => {
-    isRealScaleEnabled = enabled
-    realScaleButton.classList.toggle('active', enabled)
+  const setDynamicScaleMode = (enabled) => {
+    isDynamicScaleEnabled = enabled
+    realScaleToggle.checked = enabled
 
-    if (enabled) {
+    if (!enabled) {
       group.object3D.scale.copy(trueScale)
     }
 
@@ -89,11 +89,11 @@ const initTransformLockModes = () => {
     updateLockLoop()
   }
 
-  const setFixInPlaceMode = (enabled) => {
-    isFixInPlaceEnabled = enabled
-    fixInPlaceButton.classList.toggle('active', enabled)
+  const setDynamicRotationMode = (enabled) => {
+    isDynamicRotationEnabled = enabled
+    fixInPlaceToggle.checked = enabled
 
-    if (enabled) {
+    if (!enabled) {
       fixedTransform = {
         position: group.object3D.position.clone(),
         quaternion: group.object3D.quaternion.clone(),
@@ -104,16 +104,22 @@ const initTransformLockModes = () => {
     updateLockLoop()
   }
 
-  realScaleButton.addEventListener('click', (event) => {
-    event.preventDefault()
+  realScaleToggle.addEventListener('click', (event) => {
     event.stopPropagation()
-    setRealScaleMode(!isRealScaleEnabled)
   })
 
-  fixInPlaceButton.addEventListener('click', (event) => {
-    event.preventDefault()
+  realScaleToggle.addEventListener('change', (event) => {
     event.stopPropagation()
-    setFixInPlaceMode(!isFixInPlaceEnabled)
+    setDynamicScaleMode(realScaleToggle.checked)
+  })
+
+  fixInPlaceToggle.addEventListener('click', (event) => {
+    event.stopPropagation()
+  })
+
+  fixInPlaceToggle.addEventListener('change', (event) => {
+    event.stopPropagation()
+    setDynamicRotationMode(fixInPlaceToggle.checked)
   })
 
   scene.addEventListener('xrstart', () => {
@@ -121,7 +127,8 @@ const initTransformLockModes = () => {
     applyLocks()
   })
 
-  syncGestureComponents()
+  setDynamicScaleMode(false)
+  setDynamicRotationMode(false)
 }
 
 if (document.readyState === 'loading') {
