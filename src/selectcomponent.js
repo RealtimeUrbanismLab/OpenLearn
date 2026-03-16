@@ -230,11 +230,14 @@ export function resetModelOpacity() {
 export const selectComponent = {
   init() {
     const scene = this.el
+    const popupElement = document.getElementById('popup')
     const offscreenBanner = document.getElementById('offscreen-status-banner')
     const tempWorldPos = new THREE.Vector3()
     const tempNDC = new THREE.Vector3()
     const tempBox = new THREE.Box3()
-    const boxCorners = Array.from({length: 8}, () => new THREE.Vector3())
+    const tempSphere = new THREE.Sphere()
+    const tempProjectionMatrix = new THREE.Matrix4()
+    const tempFrustum = new THREE.Frustum()
     let locked = false
 
     const getSelectedTitle = (modelId) => {
@@ -258,65 +261,61 @@ export const selectComponent = {
       const camera = scene.camera
       if (!camera) return null
       if (camera.isArrayCamera && Array.isArray(camera.cameras) && camera.cameras.length > 0) {
-        return camera.cameras[0]
+        return camera.cameras
       }
-      return camera
+      return [camera]
+    }
+
+    const clearSelection = () => {
+      closePopup()
+      setSelectedIndex(-1)
+      updateButtonVisibility()
+      updateModelVisibility(null)
+      setOffscreenBannerVisible(false)
     }
 
     const isModelOffscreen = (modelId) => {
       const selectedModel = document.getElementById(modelId)
       if (!selectedModel) return false
 
-      const camera = getActiveCamera()
-      if (!camera) return false
-
-      camera.updateMatrixWorld(true)
+      const cameras = getActiveCamera()
+      if (!cameras || cameras.length === 0) return false
       selectedModel.object3D.updateMatrixWorld(true)
 
       const mesh = selectedModel.getObject3D('mesh')
       if (mesh) {
         tempBox.setFromObject(mesh)
         if (!tempBox.isEmpty()) {
-          const {min, max} = tempBox
-          boxCorners[0].set(min.x, min.y, min.z)
-          boxCorners[1].set(max.x, min.y, min.z)
-          boxCorners[2].set(min.x, max.y, min.z)
-          boxCorners[3].set(max.x, max.y, min.z)
-          boxCorners[4].set(min.x, min.y, max.z)
-          boxCorners[5].set(max.x, min.y, max.z)
-          boxCorners[6].set(min.x, max.y, max.z)
-          boxCorners[7].set(max.x, max.y, max.z)
+          tempBox.getBoundingSphere(tempSphere)
 
-          let allLeft = true
-          let allRight = true
-          let allAbove = true
-          let allBelow = true
-          let allBehind = true
-
-          boxCorners.forEach((corner) => {
-            tempNDC.copy(corner).project(camera)
-            if (tempNDC.x >= -1.02) allLeft = false
-            if (tempNDC.x <= 1.02) allRight = false
-            if (tempNDC.y <= 1.02) allAbove = false
-            if (tempNDC.y >= -1.02) allBelow = false
-            if (tempNDC.z <= 1) allBehind = false
+          const visibleInAnyCamera = cameras.some((camera) => {
+            camera.updateMatrixWorld(true)
+            tempProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+            tempFrustum.setFromProjectionMatrix(tempProjectionMatrix)
+            return tempFrustum.intersectsSphere(tempSphere)
           })
 
-          return allLeft || allRight || allAbove || allBelow || allBehind
+          return !visibleInAnyCamera
         }
       }
 
       selectedModel.object3D.getWorldPosition(tempWorldPos)
-      tempNDC.copy(tempWorldPos).project(camera)
-      if (tempNDC.z > 1) return true
-      if (Math.abs(tempNDC.x) > 1.05 || Math.abs(tempNDC.y) > 1.05) return true
-      return false
+
+      const visibleInAnyCamera = cameras.some((camera) => {
+        tempNDC.copy(tempWorldPos).project(camera)
+        return tempNDC.z >= -1 && tempNDC.z <= 1 && Math.abs(tempNDC.x) <= 1.05 && Math.abs(tempNDC.y) <= 1.05
+      })
+
+      return !visibleInAnyCamera
     }
 
     const updateOffscreenBanner = () => {
       const selectedIndex = getSelectedIndex()
       if (selectedIndex < 0 || selectedIndex >= modelDescriptions.length) {
         setOffscreenBannerVisible(false)
+        if (popupElement && popupElement.style.display !== 'none') {
+          popupElement.style.display = 'none'
+        }
         return
       }
 
@@ -357,7 +356,12 @@ export const selectComponent = {
       // causing multiple per-element handlers to overwrite each other.
       scene.addEventListener('click', (e) => {
         const modelElement = e.target?.closest ? e.target.closest('.cantap') : null
-        if (!modelElement) return
+        if (!modelElement) {
+          if (getSelectedIndex() !== -1) {
+            clearSelection()
+          }
+          return
+        }
 
         if (locked) return
         locked = true
@@ -370,11 +374,7 @@ export const selectComponent = {
           : null
 
         if (selectedModelId === modelId) {
-          closePopup()
-          setSelectedIndex(-1)
-          updateButtonVisibility()
-          updateModelVisibility(null)
-          setOffscreenBannerVisible(false)
+          clearSelection()
           return
         }
 
