@@ -258,6 +258,15 @@ export const selectComponent = {
       offscreenBanner.style.display = 'block'
     }
 
+    const getMeshWorldCenter = (modelElement) => {
+      const mesh = modelElement.getObject3D('mesh')
+      if (!mesh) return null
+      const box = new THREE.Box3().setFromObject(mesh)
+      if (box.isEmpty()) return null
+      box.getCenter(tempTargetWorldPosition)
+      return tempTargetWorldPosition
+    }
+
     const isSelectedModelOffscreen = () => {
       if (!currentlySelected || !cameraEntity) return false
       const selectedModel = document.getElementById(currentlySelected)
@@ -266,7 +275,12 @@ export const selectComponent = {
       const cameraObject = cameraEntity.getObject3D('camera') || cameraEntity.components?.camera?.camera
       if (!cameraObject) return false
 
-      selectedModel.object3D.getWorldPosition(tempTargetWorldPosition)
+      // Use mesh bounding box center so models at entity origin (0,0,0) are
+      // correctly located in world space rather than collapsing to the group anchor.
+      if (!getMeshWorldCenter(selectedModel)) {
+        selectedModel.object3D.getWorldPosition(tempTargetWorldPosition)
+      }
+
       cameraObject.getWorldPosition(tempCameraWorldPosition)
       cameraObject.getWorldDirection(tempCameraForward)
 
