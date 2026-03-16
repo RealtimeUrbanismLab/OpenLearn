@@ -65,6 +65,11 @@ const DIM_UNIFORM_COLOR = 0x8c95a6
 const DIM_UNIFORM_EMISSIVE = 0x1e2532
 const DIM_UNIFORM_EMISSIVE_INTENSITY = 0.08
 const DIM_UNIFORM_SHADER_INTENSITY = 0.36
+const HIGHLIGHT_COLOR = 0xcc1111
+const HIGHLIGHT_EMISSIVE = 0x330000
+const HIGHLIGHT_SHADER_OUTER_COLOR = 0x7a0000
+const HIGHLIGHT_EMISSIVE_INTENSITY = 0.2
+const HIGHLIGHT_SHADER_INTENSITY = 0.9
 const LASER_SURFACE_IDS = ['laser_surface_1', 'laser_surface_2', 'laser_surface_3']
 
 const isLaserEntity = (id) => id === 'laser_positioning_lights' || LASER_SURFACE_IDS.includes(id)
@@ -107,6 +112,7 @@ function cacheOriginalMaterials(modelElement) {
         opacity: typeof material.opacity === 'number' ? material.opacity : 1,
         depthWrite: material.depthWrite,
         depthTest: material.depthTest,
+        blending: material.blending,
         color: getSafeColor(material),
         emissive: getSafeEmissive(material),
         emissiveIntensity: material.emissiveIntensity || 0,
@@ -138,6 +144,7 @@ export function setOpacity(modelElement, opacity, dimmed = false, highlight = fa
         opacity: typeof material.opacity === 'number' ? material.opacity : 1,
         depthWrite: material.depthWrite,
         depthTest: material.depthTest,
+        blending: material.blending,
         color: getSafeColor(material),
         emissive: getSafeEmissive(material),
         emissiveIntensity: material.emissiveIntensity || 0,
@@ -157,6 +164,7 @@ export function setOpacity(modelElement, opacity, dimmed = false, highlight = fa
       material.transparent = true
       material.opacity = Math.min(opacity, original.opacity)
       material.depthWrite = false
+      material.blending = original.blending
 
       if (material.color && material.color.isColor) {
         material.color.set(DIM_UNIFORM_COLOR)
@@ -183,14 +191,15 @@ export function setOpacity(modelElement, opacity, dimmed = false, highlight = fa
         material.uniforms.uIntensity.value = DIM_UNIFORM_SHADER_INTENSITY
       }
     } else {
-      material.transparent = original.transparent
-      material.opacity = original.opacity
+      material.transparent = highlight ? false : original.transparent
+      material.opacity = highlight ? 1 : original.opacity
       material.depthWrite = original.depthWrite
       material.depthTest = original.depthTest
+      material.blending = highlight && material.uniforms ? THREE.NormalBlending : original.blending
 
       if (material.color && material.color.isColor) {
         if (highlight) {
-          material.color.set(0xcc1111)
+          material.color.set(HIGHLIGHT_COLOR)
         } else {
           material.color.copy(original.color)
         }
@@ -198,8 +207,8 @@ export function setOpacity(modelElement, opacity, dimmed = false, highlight = fa
 
       if (material.emissive && material.emissive.isColor) {
         if (highlight) {
-          material.emissive.set(0x330000)
-          material.emissiveIntensity = 0.2
+          material.emissive.set(HIGHLIGHT_EMISSIVE)
+          material.emissiveIntensity = HIGHLIGHT_EMISSIVE_INTENSITY
         } else {
           material.emissive.copy(original.emissive)
           material.emissiveIntensity = original.emissiveIntensity
@@ -207,19 +216,27 @@ export function setOpacity(modelElement, opacity, dimmed = false, highlight = fa
       }
 
       if (material.uniforms?.uOpacity && typeof original.shaderOpacity === 'number') {
-        material.uniforms.uOpacity.value = original.shaderOpacity
+        material.uniforms.uOpacity.value = highlight ? 1 : original.shaderOpacity
       }
 
       if (material.uniforms?.uInnerColor?.value && material.uniforms.uInnerColor.value.isColor) {
-        material.uniforms.uInnerColor.value.copy(original.shaderInnerColor)
+        if (highlight) {
+          material.uniforms.uInnerColor.value.set(HIGHLIGHT_COLOR)
+        } else {
+          material.uniforms.uInnerColor.value.copy(original.shaderInnerColor)
+        }
       }
 
       if (material.uniforms?.uOuterColor?.value && material.uniforms.uOuterColor.value.isColor) {
-        material.uniforms.uOuterColor.value.copy(original.shaderOuterColor)
+        if (highlight) {
+          material.uniforms.uOuterColor.value.set(HIGHLIGHT_SHADER_OUTER_COLOR)
+        } else {
+          material.uniforms.uOuterColor.value.copy(original.shaderOuterColor)
+        }
       }
 
       if (material.uniforms?.uIntensity && typeof original.shaderIntensity === 'number') {
-        material.uniforms.uIntensity.value = original.shaderIntensity
+        material.uniforms.uIntensity.value = highlight ? HIGHLIGHT_SHADER_INTENSITY : original.shaderIntensity
       }
     }
 
@@ -264,6 +281,7 @@ export function resetModelOpacity() {
     material.opacity = mat.opacity
     material.depthWrite = mat.depthWrite
     material.depthTest = mat.depthTest
+    material.blending = mat.blending
 
     if (material.color && material.color.isColor) {
       material.color.copy(mat.color)
