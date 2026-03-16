@@ -304,6 +304,7 @@ export const selectComponent = {
     const tempProjectionMatrix = new THREE.Matrix4()
     const tempFrustum = new THREE.Frustum()
     let locked = false
+    let lastTouchInteractionAt = 0
 
     const getSelectedTitle = (modelId) => {
       const match = modelDescriptions.find((item) => item.Modelname === modelId)
@@ -388,6 +389,10 @@ export const selectComponent = {
     }
 
     const getPrimaryRaycastCamera = () => {
+      const cameraEl = document.getElementById('camera')
+      const cameraObj = cameraEl?.getObject3D?.('camera')
+      if (cameraObj) return cameraObj
+
       const cameras = getActiveCamera()
       if (!cameras || cameras.length === 0) return null
       return cameras[0]
@@ -483,6 +488,19 @@ export const selectComponent = {
       // target determines currentlySelected — avoids A-Frame event bubbling
       // causing multiple per-element handlers to overwrite each other.
       const handleSceneSelection = (e) => {
+        if (locked) return
+
+        const isTouchLikeEvent = e.type === 'touchend' || e.pointerType === 'touch' || e.pointerType === 'pen'
+        const now = performance.now()
+
+        if (e.type === 'click' && now - lastTouchInteractionAt < 550) {
+          return
+        }
+
+        if (isTouchLikeEvent) {
+          lastTouchInteractionAt = now
+        }
+
         let modelElement = e.target?.closest ? e.target.closest('.cantap') : null
         if (!modelElement) {
           modelElement = pickModelFromScreenPoint(e)
@@ -495,7 +513,6 @@ export const selectComponent = {
           return
         }
 
-        if (locked) return
         locked = true
         setTimeout(() => (locked = false), 250)
 
@@ -526,7 +543,7 @@ export const selectComponent = {
       if (sceneCanvas) {
         sceneCanvas.addEventListener('touchend', handleSceneSelection, {passive: true})
         sceneCanvas.addEventListener('pointerup', (event) => {
-          if (event.pointerType === 'touch' || event.pointerType === 'pen') {
+          if (event.pointerType === 'pen') {
             handleSceneSelection(event)
           }
         }, {passive: true})
