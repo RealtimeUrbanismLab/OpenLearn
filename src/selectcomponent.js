@@ -3,6 +3,44 @@ import {openPopup, closePopup} from './popup.js'
 import {updateButtonVisibility} from './next-button.js'
 
 const originalMaterials = new Map()
+
+// ── Outline (backface-expansion) ────────────────────────────────────────────
+const OUTLINE_SCALE = 1.04
+const outlineMaterial = new THREE.MeshBasicMaterial({
+  color: 0xffffff,
+  side: THREE.BackSide,
+  depthTest: true,
+  depthWrite: false,
+  transparent: false,
+})
+
+function addOutlines(modelElement) {
+  const mesh = modelElement.getObject3D('mesh')
+  if (!mesh) return
+  mesh.traverse((node) => {
+    if (node._isOutline) return
+    if (!node.isMesh && !node.isSkinnedMesh) return
+    if (!node.geometry) return
+    if (node.children.some((c) => c._isOutline)) return // already added
+    const outline = new THREE.Mesh(node.geometry, outlineMaterial)
+    outline.scale.setScalar(OUTLINE_SCALE)
+    outline._isOutline = true
+    outline.renderOrder = node.renderOrder - 1
+    node.add(outline)
+  })
+}
+
+function removeOutlines(modelElement) {
+  const mesh = modelElement.getObject3D('mesh')
+  if (!mesh) return
+  mesh.traverse((node) => {
+    if (node._isOutline) return
+    const toRemove = node.children.filter((c) => c._isOutline)
+    toRemove.forEach((c) => node.remove(c))
+  })
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const DIM_OPACITY = 0.24
 const DIM_UNIFORM_COLOR = 0x8c95a6
 const DIM_UNIFORM_EMISSIVE = 0x1e2532
@@ -40,6 +78,7 @@ function cacheOriginalMaterials(modelElement) {
   const mesh = modelElement.getObject3D('mesh')
   if (!mesh) return
   mesh.traverse((node) => {
+    if (node._isOutline) return
     if (!node.isMesh && !node.isSkinnedMesh) return
     const material = node.material
     if (!material) return
@@ -70,6 +109,7 @@ export function setOpacity(modelElement, opacity, dimmed = false, highlight = fa
   const mesh = modelElement.getObject3D('mesh')
   if (!mesh) return
   mesh.traverse((node) => {
+    if (node._isOutline) return
     if (!node.isMesh && !node.isSkinnedMesh) return
     const material = node.material
     if (!material) return
@@ -166,6 +206,7 @@ export function setOpacity(modelElement, opacity, dimmed = false, highlight = fa
 
 export function updateModelVisibility(selectedModelId) {
   if (!selectedModelId) {
+    document.querySelectorAll('[gltf-model]').forEach((el) => removeOutlines(el))
     resetModelOpacity()
     setLaserVisibility(null)
     return
@@ -179,11 +220,14 @@ export function updateModelVisibility(selectedModelId) {
 
     if (el.id === selectedModelId) {
       setOpacity(el, 1, false, true)
+      addOutlines(el)
     } else if (!isLaserSelected && isLaserSurface) {
       // Hidden laser surfaces are excluded from dimming when lasers are off
       setOpacity(el, 1, false)
+      removeOutlines(el)
     } else {
       setOpacity(el, DIM_OPACITY, true)
+      removeOutlines(el)
     }
   })
 }
