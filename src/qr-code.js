@@ -12,13 +12,11 @@ const isMobile = () => {
 // Generate QR code for the current site
 const initQRCode = () => {
   const qrContainer = document.getElementById('qr-code-container')
-  const realScaleButton = document.getElementById('real-scale-button')
-  const fixRotationButton = document.getElementById('fix-in-place-button')
+  const transformControls = document.getElementById('transform-controls')
 
   const setAppControlsVisible = (visible) => {
     const displayValue = visible ? 'block' : 'none'
-    if (realScaleButton) realScaleButton.style.display = displayValue
-    if (fixRotationButton) fixRotationButton.style.display = displayValue
+    if (transformControls) transformControls.style.display = displayValue
   }
 
   if (!qrContainer) return

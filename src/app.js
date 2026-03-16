@@ -8,6 +8,30 @@ import {initQRCode} from './qr-code'
 // Initialize QR code for desktop users
 initQRCode()
 
+const initTransformControlsMenu = () => {
+  const controls = document.getElementById('transform-controls')
+  const menuButton = document.getElementById('transform-menu-button')
+
+  if (!controls || !menuButton) return
+
+  const setMenuOpen = (isOpen) => {
+    controls.classList.toggle('open', isOpen)
+    menuButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false')
+  }
+
+  menuButton.addEventListener('click', (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    setMenuOpen(!controls.classList.contains('open'))
+  })
+
+  document.addEventListener('click', (event) => {
+    if (!controls.contains(event.target)) {
+      setMenuOpen(false)
+    }
+  })
+}
+
 const initTransformLockModes = () => {
   const realScaleToggle = document.getElementById('real-scale-button')
   const fixInPlaceToggle = document.getElementById('fix-in-place-button')
@@ -132,8 +156,12 @@ const initTransformLockModes = () => {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initTransformLockModes)
+  document.addEventListener('DOMContentLoaded', () => {
+    initTransformControlsMenu()
+    initTransformLockModes()
+  })
 } else {
+  initTransformControlsMenu()
   initTransformLockModes()
 }
 

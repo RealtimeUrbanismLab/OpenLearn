@@ -15,19 +15,26 @@
 </style>
 
 <button id="rotate-button">Turn On</button>
-<div class="mode-toggle-row" id="dynamic-scale-row">
-  <span class="mode-toggle-label">Dynamic Scale</span>
-  <label class="mode-toggle-switch">
-    <input id="real-scale-button" type="checkbox">
-    <span class="mode-toggle-slider"></span>
-  </label>
-</div>
-<div class="mode-toggle-row" id="dynamic-rotation-row">
-  <span class="mode-toggle-label">Dynamic Rotation</span>
-  <label class="mode-toggle-switch">
-    <input id="fix-in-place-button" type="checkbox">
-    <span class="mode-toggle-slider"></span>
-  </label>
+<div id="transform-controls">
+  <button id="transform-menu-button" type="button" aria-label="Toggle transform controls" aria-expanded="false">
+    ☰
+  </button>
+  <div id="transform-menu-panel">
+    <div class="mode-toggle-row" id="dynamic-scale-row">
+      <span class="mode-toggle-label">Dynamic Scale</span>
+      <label class="mode-toggle-switch">
+        <input id="real-scale-button" type="checkbox">
+        <span class="mode-toggle-slider"></span>
+      </label>
+    </div>
+    <div class="mode-toggle-row" id="dynamic-rotation-row">
+      <span class="mode-toggle-label">Dynamic Rotation</span>
+      <label class="mode-toggle-switch">
+        <input id="fix-in-place-button" type="checkbox">
+        <span class="mode-toggle-slider"></span>
+      </label>
+    </div>
+  </div>
 </div>
 
 <!-- QR Code for desktop users -->
@@ -113,7 +120,7 @@
   <!-- Camera with raycaster for tap interactions -->
   <a-camera
     id="camera"
-    position="4 1 0"
+    position="6 1 0"
     rotation="0 90 0"
     raycaster="objects: .cantap, .interactable"
     cursor="rayOrigin: mouse; fuse: false">
