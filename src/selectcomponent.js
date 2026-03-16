@@ -1,4 +1,4 @@
-import {modelDescriptions, setSelectedIndex} from './data.js'
+import {modelDescriptions, getSelectedIndex, setSelectedIndex} from './data.js'
 import {openPopup, closePopup} from './popup.js'
 import {updateButtonVisibility} from './next-button.js'
 
@@ -233,8 +233,8 @@ export const selectComponent = {
     const offscreenBanner = document.getElementById('offscreen-status-banner')
     const tempWorldPos = new THREE.Vector3()
     const tempNDC = new THREE.Vector3()
-    const tempBox = new THREE.Box3()
-    let currentlySelected = null
+    const tempProjectionMatrix = new THREE.Matrix4()
+    const tempFrustum = new THREE.Frustum()
     let locked = false
 
     const getSelectedTitle = (modelId) => {
@@ -254,33 +254,32 @@ export const selectComponent = {
       offscreenBanner.style.display = 'block'
     }
 
-    const isSelectedModelOffscreen = () => {
-      if (!currentlySelected) return false
-      const selectedModel = document.getElementById(currentlySelected)
+    const getActiveCamera = () => {
+      const camera = scene.camera
+      if (!camera) return null
+      if (camera.isArrayCamera && Array.isArray(camera.cameras) && camera.cameras.length > 0) {
+        return camera.cameras[0]
+      }
+      return camera
+    }
+
+    const isModelOffscreen = (modelId) => {
+      const selectedModel = document.getElementById(modelId)
       if (!selectedModel) return false
 
-      // scene.camera is the actual THREE.js camera A-Frame renders with,
-      // including the XR camera in AR mode — more reliable than querying the entity.
-      const camera = scene.camera
+      const camera = getActiveCamera()
       if (!camera) return false
 
-      // Compute world-space bounding box center of the mesh so models sharing
-      // the group origin (0,0,0) are located correctly.
+      camera.updateMatrixWorld(true)
+
       const mesh = selectedModel.getObject3D('mesh')
       if (mesh) {
-        tempBox.setFromObject(mesh)
-        if (!tempBox.isEmpty()) {
-          tempBox.getCenter(tempWorldPos)
-        } else {
-          selectedModel.object3D.getWorldPosition(tempWorldPos)
-        }
-      } else {
-        selectedModel.object3D.getWorldPosition(tempWorldPos)
+        tempProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+        tempFrustum.setFromProjectionMatrix(tempProjectionMatrix)
+        return !tempFrustum.intersectsObject(mesh)
       }
 
-      // Project to NDC [-1..1] in x/y. After project(), z > 1 means behind
-      // the camera; |x| or |y| > 1 means outside the viewport.
-      // A small margin (1.05) avoids jitter right at the edges.
+      selectedModel.object3D.getWorldPosition(tempWorldPos)
       tempNDC.copy(tempWorldPos).project(camera)
       if (tempNDC.z > 1) return true
       if (Math.abs(tempNDC.x) > 1.05 || Math.abs(tempNDC.y) > 1.05) return true
@@ -288,12 +287,14 @@ export const selectComponent = {
     }
 
     const updateOffscreenBanner = () => {
-      if (!currentlySelected) {
+      const selectedIndex = getSelectedIndex()
+      if (selectedIndex < 0 || selectedIndex >= modelDescriptions.length) {
         setOffscreenBannerVisible(false)
         return
       }
 
-      setOffscreenBannerVisible(isSelectedModelOffscreen(), currentlySelected)
+      const modelId = modelDescriptions[selectedIndex].Modelname
+      setOffscreenBannerVisible(isModelOffscreen(modelId), modelId)
     }
 
     const bannerLoop = () => {
@@ -328,17 +329,20 @@ export const selectComponent = {
       // target determines currentlySelected — avoids A-Frame event bubbling
       // causing multiple per-element handlers to overwrite each other.
       scene.addEventListener('click', (e) => {
-        const modelElement = e.target
-        if (!modelElement || !modelElement.classList.contains('cantap')) return
+        const modelElement = e.target?.closest ? e.target.closest('.cantap') : null
+        if (!modelElement) return
 
         if (locked) return
         locked = true
         setTimeout(() => (locked = false), 250)
 
         const modelId = modelElement.id
+        const selectedIndex = getSelectedIndex()
+        const selectedModelId = selectedIndex >= 0 && selectedIndex < modelDescriptions.length
+          ? modelDescriptions[selectedIndex].Modelname
+          : null
 
-        if (currentlySelected === modelId) {
-          currentlySelected = null
+        if (selectedModelId === modelId) {
           closePopup()
           setSelectedIndex(-1)
           updateButtonVisibility()
@@ -350,7 +354,6 @@ export const selectComponent = {
         const index = modelDescriptions.findIndex(d => d.Modelname === modelId)
         if (index === -1) return
 
-        currentlySelected = modelId
         setSelectedIndex(index)
         openPopup(index, modelDescriptions)
         updateButtonVisibility()
