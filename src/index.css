@@ -41,14 +41,14 @@ body {
   touch-action: manipulation;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
+  justify-content: center;
   background-color: #000000;
   color: #ffffff;
   border: none;
   border-radius: 999px;
-  padding: 8px 12px;
-  width: 168px;
+  padding: 0;
+  width: 42px;
+  height: 42px;
   cursor: pointer;
 }
 
@@ -564,6 +564,21 @@ a {
     font-size: 30px;
   }
 
+}
+
+@media (min-width: 740px) and (orientation: portrait) {
+  .popup {
+    left: 10vw;
+    right: 10vw;
+    height: 78vh;
+    max-height: 84dvh;
+    padding: 2.4vh 2.6vw;
+  }
+
+  .popup-content-wrapper {
+    margin-top: 1vh;
+    margin-bottom: 1vh;
+  }
 }
 
 /* If the device is in a horizontal (landscape) aspect ratio, show the popup on the right side */

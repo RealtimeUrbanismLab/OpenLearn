@@ -33,10 +33,9 @@ const initInstructionOverlay = () => {
   return {openOverlay}
 }
 
-const initTransformControlsMenu = (onOpenInstructions) => {
+const initTransformControlsMenu = () => {
   const controls = document.getElementById('transform-controls')
   const menuButton = document.getElementById('transform-menu-button')
-  const instructionsButton = document.getElementById('instructions-menu-button')
 
   if (!controls || !menuButton) return
 
@@ -56,15 +55,22 @@ const initTransformControlsMenu = (onOpenInstructions) => {
       setMenuOpen(false)
     }
   })
+}
 
-  if (instructionsButton) {
-    instructionsButton.addEventListener('click', (event) => {
-      event.preventDefault()
-      event.stopPropagation()
-      setMenuOpen(false)
-      if (onOpenInstructions) onOpenInstructions()
-    })
-  }
+const initInstructionsMenuButton = (onOpenInstructions) => {
+  const instructionsButton = document.getElementById('instructions-menu-button')
+  const controls = document.getElementById('transform-controls')
+
+  if (!instructionsButton) return
+
+  instructionsButton.addEventListener('click', (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    if (controls) controls.classList.remove('open')
+    const menuButton = document.getElementById('transform-menu-button')
+    if (menuButton) menuButton.setAttribute('aria-expanded', 'false')
+    if (onOpenInstructions) onOpenInstructions()
+  })
 }
 
 const initTransformLockModes = () => {
@@ -75,7 +81,8 @@ const initTransformLockModes = () => {
 
   if (!realScaleToggle || !fixInPlaceToggle || !scene || !group) return
 
-  const trueScale = group.object3D.scale.clone().multiplyScalar(2.2)
+  const authoredScale = group.getAttribute('scale') || {x: 1, y: 1, z: 1}
+  const trueScale = new THREE.Vector3(authoredScale.x, authoredScale.y, authoredScale.z).multiplyScalar(2.2)
   let isDynamicScaleEnabled = false
   let isDynamicRotationEnabled = false
 
@@ -146,14 +153,16 @@ const initTransformLockModes = () => {
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    const overlayController = initInstructionOverlay()
-    initTransformControlsMenu(() => overlayController?.openOverlay())
+    initTransformControlsMenu()
     initTransformLockModes()
+    const overlayController = initInstructionOverlay()
+    initInstructionsMenuButton(() => overlayController?.openOverlay())
   })
 } else {
-  const overlayController = initInstructionOverlay()
-  initTransformControlsMenu(() => overlayController?.openOverlay())
+  initTransformControlsMenu()
   initTransformLockModes()
+  const overlayController = initInstructionOverlay()
+  initInstructionsMenuButton(() => overlayController?.openOverlay())
 }
 
 let envMapTexture = null
