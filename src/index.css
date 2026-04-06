@@ -362,6 +362,7 @@ a {
   flex-direction: column;
   justify-content: flex-start;
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   margin-top: 1vh;
   margin-bottom: 1vh;
@@ -578,6 +579,21 @@ a {
   .popup-content-wrapper {
     margin-top: 1vh;
     margin-bottom: 1vh;
+  }
+}
+
+@media (min-width: 740px) and (max-width: 1400px) and (orientation: landscape) {
+  .popup {
+    top: calc(2dvh + env(safe-area-inset-top));
+    bottom: calc(2dvh + env(safe-area-inset-bottom));
+    width: 36vw;
+    max-width: 520px;
+    padding: 2dvh 1.8vw;
+  }
+
+  .popup-content-wrapper {
+    margin-top: 0.8vh;
+    margin-bottom: 0.8vh;
   }
 }
 
