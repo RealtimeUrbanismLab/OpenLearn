@@ -23,6 +23,22 @@ const updateButtonVisibility = () => {
 
 const nextButtonComponent = () => ({
   init() {
+    let suppressClickUntil = 0
+
+    const shouldHandleEvent = (event) => {
+      const now = Date.now()
+
+      if (event.type === 'click' && now < suppressClickUntil) {
+        return false
+      }
+
+      if (event.type === 'pointerup' && (event.pointerType === 'touch' || event.pointerType === 'pen')) {
+        suppressClickUntil = now + 700
+      }
+
+      return true
+    }
+
     // Start/place buttons removed; navigation works without gating
 
     const bindNavButtons = () => {
@@ -33,6 +49,7 @@ const nextButtonComponent = () => ({
       if (nextButton.dataset.bound === 'true' && backButton.dataset.bound === 'true') return
 
       const handleNext = (event) => {
+        if (!shouldHandleEvent(event)) return
         event.preventDefault()
         event.stopPropagation()
         const currentIndex = getSelectedIndex()
@@ -47,6 +64,7 @@ const nextButtonComponent = () => ({
       }
 
       const handleBack = (event) => {
+        if (!shouldHandleEvent(event)) return
         event.preventDefault()
         event.stopPropagation()
         const currentIndex = getSelectedIndex()
@@ -61,9 +79,9 @@ const nextButtonComponent = () => ({
       }
 
       nextButton.addEventListener('click', handleNext)
-      nextButton.addEventListener('touchend', handleNext)
+      nextButton.addEventListener('pointerup', handleNext)
       backButton.addEventListener('click', handleBack)
-      backButton.addEventListener('touchend', handleBack)
+      backButton.addEventListener('pointerup', handleBack)
 
       nextButton.dataset.bound = 'true'
       backButton.dataset.bound = 'true'

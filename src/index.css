@@ -211,10 +211,11 @@ a {
 /* Popup styling */
 .popup {
   position: fixed;
-  bottom: 2vh;
+  bottom: calc(2vh + env(safe-area-inset-bottom));
   left: 3vw;
   right: 3vw;
   height: 40vh;
+  max-height: 46dvh;
   background-color: rgba(255, 255, 255, 0.9);
   color: var(--text-color);
   padding: 3vh 3vw;
@@ -294,14 +295,6 @@ a {
   pointer-events: auto;
   cursor: pointer;
   z-index: 10001;
-}
-
-#nextbutton {
-  
-}
-
-#backbutton {
-  
 }
 
 #nextbutton h2,
@@ -413,15 +406,16 @@ a {
   }
 
   .popup {
-    top: 65vh;
+    top: auto;
+    bottom: calc(2vh + env(safe-area-inset-bottom));
     left: 18vw;
     right: 18vw;
+    height: 36vh;
+    max-height: 42dvh;
   }
 
   .popuptitle {
-    top: 62.5vh;
-    left: 17.7vw;
-    right: 30vw;
+    position: static;
   }
 
   .title {
@@ -440,12 +434,6 @@ a {
     font-size: 30px;
   }
 
-  #nextbutton {
-    right: 20vw;
-  }
-  #backbutton {
-    left: 20vw;
-  }
 }
 
 /* If the device is in a horizontal (landscape) aspect ratio, show the popup on the right side */
