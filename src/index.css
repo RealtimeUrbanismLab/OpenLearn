@@ -306,7 +306,6 @@ a {
   gap: 10px;
 }
 
-#instruction-enable-motion,
 #instruction-close {
   border: none;
   border-radius: 999px;
@@ -316,22 +315,15 @@ a {
   cursor: pointer;
 }
 
-#instruction-enable-motion {
-  background-color: #e7f1ff;
-  color: #0b2f56;
-}
-
 #instruction-close {
   background-color: #2f6df6;
   color: #ffffff;
 }
 
-#instruction-enable-motion:hover,
 #instruction-close:hover {
   filter: brightness(0.95);
 }
 
-#instruction-enable-motion:active,
 #instruction-close:active {
   filter: brightness(0.88);
 }
