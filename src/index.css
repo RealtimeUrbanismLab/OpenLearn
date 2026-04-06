@@ -687,3 +687,38 @@ a {
     font-size: 1.15em;
   }
 }
+
+/* Height floor for iPad-class devices to prevent short description areas */
+@media (min-width: 768px) and (max-width: 1400px) and (pointer: coarse) {
+  .popup {
+    min-height: 78dvh;
+    height: 88dvh;
+    max-height: 92dvh;
+  }
+
+  .popup-content-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1400px) and (pointer: coarse) and (orientation: portrait) {
+  .popup {
+    top: calc(1dvh + env(safe-area-inset-top));
+    bottom: auto;
+    left: 10vw;
+    right: 10vw;
+    width: auto;
+    max-width: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1400px) and (pointer: coarse) and (orientation: landscape) {
+  .popup {
+    top: calc(1dvh + env(safe-area-inset-top));
+    bottom: auto;
+    right: 2vw;
+    width: 28vw;
+    max-width: 420px;
+  }
+}
