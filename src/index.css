@@ -569,10 +569,12 @@ a {
 
 @media (min-width: 740px) and (orientation: portrait) {
   .popup {
+    top: calc(1dvh + env(safe-area-inset-top));
+    bottom: calc(1dvh + env(safe-area-inset-bottom));
     left: 10vw;
     right: 10vw;
-    height: 78vh;
-    max-height: 84dvh;
+    height: auto;
+    max-height: none;
     padding: 2.4vh 2.6vw;
   }
 
@@ -586,8 +588,8 @@ a {
   .popup {
     top: calc(2dvh + env(safe-area-inset-top));
     bottom: calc(2dvh + env(safe-area-inset-bottom));
-    width: 36vw;
-    max-width: 520px;
+    width: 28vw;
+    max-width: 420px;
     padding: 2dvh 1.8vw;
   }
 
@@ -667,11 +669,11 @@ a {
 /* Final tablet override: keep component popup tall on iPads with coarse touch input */
 @media (min-width: 900px) and (min-aspect-ratio: 1/1) and (pointer: coarse) {
   .popup {
-    top: calc(1.5dvh + env(safe-area-inset-top));
-    bottom: calc(1.5dvh + env(safe-area-inset-bottom));
+    top: calc(0.8dvh + env(safe-area-inset-top));
+    bottom: calc(0.8dvh + env(safe-area-inset-bottom));
     right: 2vw;
-    width: 40vw;
-    max-width: 560px;
+    width: 28vw;
+    max-width: 420px;
     padding: 1.8dvh 1.8vw;
   }
 
