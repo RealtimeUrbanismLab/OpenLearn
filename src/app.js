@@ -14,7 +14,7 @@ const initInstructionOverlay = () => {
   const permissionButton = document.getElementById('instruction-enable-motion')
   const motionStatus = document.getElementById('instruction-motion-status')
 
-  if (!overlay || !closeButton || !permissionButton || !motionStatus) return null
+  if (!overlay || !closeButton || !permissionButton) return null
 
   let isOpen = false
   let movementScore = 0
@@ -29,6 +29,7 @@ const initInstructionOverlay = () => {
   const isPortrait = () => window.innerHeight >= window.innerWidth
 
   const setStatusText = () => {
+    if (!motionStatus) return
     if (!isPortrait()) {
       motionStatus.textContent = 'Rotate your device to portrait mode, then move it back and forth.'
       return
@@ -127,7 +128,7 @@ const initInstructionOverlay = () => {
       enableMotionTracking()
     } else {
       permissionButton.style.display = 'none'
-      motionStatus.textContent = 'Motion tracking is unavailable on this device. Tap Continue to proceed.'
+      if (motionStatus) motionStatus.textContent = 'Motion tracking is unavailable on this device. Tap Continue to proceed.'
     }
 
     window.addEventListener('orientationchange', handleOrientation)
@@ -146,11 +147,11 @@ const initInstructionOverlay = () => {
             permissionButton.style.display = 'none'
             enableMotionTracking()
           } else {
-            motionStatus.textContent = 'Motion access is blocked. Tap Continue to proceed manually.'
+            if (motionStatus) motionStatus.textContent = 'Motion access is blocked. Tap Continue to proceed manually.'
           }
         })
         .catch(() => {
-          motionStatus.textContent = 'Unable to enable motion access. Tap Continue to proceed manually.'
+          if (motionStatus) motionStatus.textContent = 'Unable to enable motion access. Tap Continue to proceed manually.'
         })
     })
   }
