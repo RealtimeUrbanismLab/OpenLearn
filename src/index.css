@@ -663,3 +663,25 @@ a {
     font-size: 0.75em;
   }
 }
+
+/* Final tablet override: keep component popup tall on iPads with coarse touch input */
+@media (min-width: 900px) and (min-aspect-ratio: 1/1) and (pointer: coarse) {
+  .popup {
+    top: calc(1.5dvh + env(safe-area-inset-top));
+    bottom: calc(1.5dvh + env(safe-area-inset-bottom));
+    right: 2vw;
+    width: 40vw;
+    max-width: 560px;
+    padding: 1.8dvh 1.8vw;
+  }
+
+  .popup-content-wrapper {
+    margin-top: 0.5vh;
+    margin-bottom: 0.5vh;
+    min-height: 0;
+  }
+
+  .content {
+    font-size: 1.15em;
+  }
+}
