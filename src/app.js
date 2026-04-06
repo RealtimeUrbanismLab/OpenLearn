@@ -14,16 +14,15 @@ const initInstructionOverlay = () => {
   const permissionButton = document.getElementById('instruction-enable-motion')
   const motionStatus = document.getElementById('instruction-motion-status')
 
-  if (!overlay || !closeButton || !permissionButton || !motionStatus) return
+  if (!overlay || !closeButton || !permissionButton || !motionStatus) return null
 
-  overlay.style.display = 'flex'
-  document.body.classList.add('instruction-overlay-open')
-
-  let isClosed = false
+  let isOpen = false
   let movementScore = 0
   let lastMagnitude = null
   let lastTimestamp = 0
-  const shownAt = Date.now()
+  let shownAt = 0
+  let isMotionTrackingActive = false
+  let motionPermissionGranted = false
   const MIN_VISIBLE_MS = 4500
   const REQUIRED_MOVEMENT_SCORE = 22
 
@@ -38,19 +37,32 @@ const initInstructionOverlay = () => {
     motionStatus.textContent = 'Hold your device in portrait mode and move it gently back and forth.'
   }
 
+  const resetTracking = () => {
+    movementScore = 0
+    lastMagnitude = null
+    lastTimestamp = 0
+    shownAt = Date.now()
+  }
+
+  const stopMotionTracking = () => {
+    if (!isMotionTrackingActive) return
+    window.removeEventListener('devicemotion', handleMotion)
+    isMotionTrackingActive = false
+  }
+
   const closeOverlay = () => {
-    if (isClosed) return
-    isClosed = true
+    if (!isOpen) return
+    isOpen = false
 
     overlay.style.display = 'none'
-    document.body.classList.remove('instruction-overlay-open')
 
-    window.removeEventListener('devicemotion', handleMotion)
+    stopMotionTracking()
     window.removeEventListener('orientationchange', handleOrientation)
     window.removeEventListener('resize', handleOrientation)
   }
 
   const maybeAutoClose = () => {
+    if (!isOpen) return
     const visibleFor = Date.now() - shownAt
     if (visibleFor < MIN_VISIBLE_MS) return
     if (!isPortrait()) return
@@ -59,7 +71,7 @@ const initInstructionOverlay = () => {
   }
 
   const handleMotion = (event) => {
-    if (isClosed || !isPortrait()) return
+    if (!isOpen || !isPortrait()) return
 
     const accel = event.accelerationIncludingGravity || event.acceleration
     if (!accel) return
@@ -86,25 +98,51 @@ const initInstructionOverlay = () => {
   }
 
   const handleOrientation = () => {
-    if (isClosed) return
+    if (!isOpen) return
     setStatusText()
     maybeAutoClose()
   }
 
   const enableMotionTracking = () => {
-    if (isClosed) return
+    if (!isOpen || isMotionTrackingActive) return
     window.addEventListener('devicemotion', handleMotion, {passive: true})
+    isMotionTrackingActive = true
+    setStatusText()
+  }
+
+  const openOverlay = () => {
+    isOpen = true
+    resetTracking()
+    overlay.style.display = 'flex'
+
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+      if (motionPermissionGranted) {
+        permissionButton.style.display = 'none'
+        enableMotionTracking()
+      } else {
+        permissionButton.style.display = 'inline-flex'
+      }
+    } else if ('DeviceMotionEvent' in window) {
+      permissionButton.style.display = 'none'
+      enableMotionTracking()
+    } else {
+      permissionButton.style.display = 'none'
+      motionStatus.textContent = 'Motion tracking is unavailable on this device. Tap Continue to proceed.'
+    }
+
+    window.addEventListener('orientationchange', handleOrientation)
+    window.addEventListener('resize', handleOrientation)
     setStatusText()
   }
 
   closeButton.addEventListener('click', closeOverlay)
 
   if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-    permissionButton.style.display = 'inline-flex'
     permissionButton.addEventListener('click', () => {
       DeviceMotionEvent.requestPermission()
         .then((permissionState) => {
           if (permissionState === 'granted') {
+            motionPermissionGranted = true
             permissionButton.style.display = 'none'
             enableMotionTracking()
           } else {
@@ -115,20 +153,16 @@ const initInstructionOverlay = () => {
           motionStatus.textContent = 'Unable to enable motion access. Tap Continue to proceed manually.'
         })
     })
-  } else if ('DeviceMotionEvent' in window) {
-    enableMotionTracking()
-  } else {
-    motionStatus.textContent = 'Motion tracking is unavailable on this device. Tap Continue to proceed.'
   }
 
-  window.addEventListener('orientationchange', handleOrientation)
-  window.addEventListener('resize', handleOrientation)
-  setStatusText()
+  openOverlay()
+  return {openOverlay}
 }
 
-const initTransformControlsMenu = () => {
+const initTransformControlsMenu = (onOpenInstructions) => {
   const controls = document.getElementById('transform-controls')
   const menuButton = document.getElementById('transform-menu-button')
+  const instructionsButton = document.getElementById('instructions-menu-button')
 
   if (!controls || !menuButton) return
 
@@ -148,6 +182,15 @@ const initTransformControlsMenu = () => {
       setMenuOpen(false)
     }
   })
+
+  if (instructionsButton) {
+    instructionsButton.addEventListener('click', (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      setMenuOpen(false)
+      if (onOpenInstructions) onOpenInstructions()
+    })
+  }
 }
 
 const initTransformLockModes = () => {
@@ -159,6 +202,8 @@ const initTransformLockModes = () => {
   if (!realScaleToggle || !fixInPlaceToggle || !scene || !group) return
 
   const trueScale = group.object3D.scale.clone().multiplyScalar(2.2)
+  const initialGroupPosition = group.object3D.position.clone()
+  const initialGroupRotation = group.object3D.rotation.clone()
   let isDynamicScaleEnabled = false
   let isDynamicRotationEnabled = false
 
@@ -217,6 +262,8 @@ const initTransformLockModes = () => {
   })
 
   scene.addEventListener('xrstart', () => {
+    group.object3D.position.copy(initialGroupPosition)
+    group.object3D.rotation.copy(initialGroupRotation)
     syncGestureComponents()
     if (!isDynamicScaleEnabled) {
       group.object3D.scale.copy(trueScale)
@@ -229,13 +276,13 @@ const initTransformLockModes = () => {
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    initInstructionOverlay()
-    initTransformControlsMenu()
+    const overlayController = initInstructionOverlay()
+    initTransformControlsMenu(() => overlayController?.openOverlay())
     initTransformLockModes()
   })
 } else {
-  initInstructionOverlay()
-  initTransformControlsMenu()
+  const overlayController = initInstructionOverlay()
+  initTransformControlsMenu(() => overlayController?.openOverlay())
   initTransformLockModes()
 }
 
