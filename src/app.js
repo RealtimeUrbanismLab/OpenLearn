@@ -82,7 +82,7 @@ const initTransformLockModes = () => {
   if (!realScaleToggle || !fixInPlaceToggle || !scene || !group) return
 
   const authoredScale = group.getAttribute('scale') || {x: 1, y: 1, z: 1}
-  const trueScale = new THREE.Vector3(authoredScale.x, authoredScale.y, authoredScale.z).multiplyScalar(2.2)
+  const trueScale = new THREE.Vector3(authoredScale.x, authoredScale.y, authoredScale.z).multiplyScalar(2.6)
   let isDynamicScaleEnabled = false
   let isDynamicRotationEnabled = false
 
