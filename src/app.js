@@ -202,9 +202,7 @@ const initTransformLockModes = () => {
 
   if (!realScaleToggle || !fixInPlaceToggle || !scene || !group) return
 
-  const trueScale = group.object3D.scale.clone().multiplyScalar(2.2)
-  const initialGroupPosition = group.object3D.position.clone()
-  const initialGroupRotation = group.object3D.rotation.clone()
+  const defaultScale = group.object3D.scale.clone()
   let isDynamicScaleEnabled = false
   let isDynamicRotationEnabled = false
 
@@ -231,7 +229,7 @@ const initTransformLockModes = () => {
     realScaleToggle.checked = enabled
 
     if (!enabled) {
-      group.object3D.scale.copy(trueScale)
+      group.object3D.scale.copy(defaultScale)
     }
 
     syncGestureComponents()
@@ -263,12 +261,7 @@ const initTransformLockModes = () => {
   })
 
   scene.addEventListener('xrstart', () => {
-    group.object3D.position.copy(initialGroupPosition)
-    group.object3D.rotation.copy(initialGroupRotation)
     syncGestureComponents()
-    if (!isDynamicScaleEnabled) {
-      group.object3D.scale.copy(trueScale)
-    }
   })
 
   setDynamicScaleMode(false)
