@@ -43,8 +43,6 @@ const initTransformLockModes = () => {
   const trueScale = group.object3D.scale.clone().multiplyScalar(2.2)
   let isDynamicScaleEnabled = false
   let isDynamicRotationEnabled = false
-  let lockFrameId = null
-  let fixedTransform = null
 
   const syncGestureComponents = () => {
     if (!group.hasAttribute('xrextras-gesture-detector')) {
@@ -64,41 +62,6 @@ const initTransformLockModes = () => {
     }
   }
 
-  const applyLocks = () => {
-    if (!isDynamicScaleEnabled) {
-      group.object3D.scale.copy(trueScale)
-    }
-
-    if (!isDynamicRotationEnabled && fixedTransform) {
-      group.object3D.position.copy(fixedTransform.position)
-      group.object3D.quaternion.copy(fixedTransform.quaternion)
-    }
-  }
-
-  const startLockLoop = () => {
-    const tick = () => {
-      applyLocks()
-      if (!isDynamicScaleEnabled || !isDynamicRotationEnabled) {
-        lockFrameId = requestAnimationFrame(tick)
-      }
-    }
-    lockFrameId = requestAnimationFrame(tick)
-  }
-
-  const stopLockLoop = () => {
-    if (lockFrameId !== null) {
-      cancelAnimationFrame(lockFrameId)
-      lockFrameId = null
-    }
-  }
-
-  const updateLockLoop = () => {
-    stopLockLoop()
-    if (!isDynamicScaleEnabled || !isDynamicRotationEnabled) {
-      startLockLoop()
-    }
-  }
-
   const setDynamicScaleMode = (enabled) => {
     isDynamicScaleEnabled = enabled
     realScaleToggle.checked = enabled
@@ -108,22 +71,13 @@ const initTransformLockModes = () => {
     }
 
     syncGestureComponents()
-    updateLockLoop()
   }
 
   const setDynamicRotationMode = (enabled) => {
     isDynamicRotationEnabled = enabled
     fixInPlaceToggle.checked = enabled
 
-    if (!enabled) {
-      fixedTransform = {
-        position: group.object3D.position.clone(),
-        quaternion: group.object3D.quaternion.clone(),
-      }
-    }
-
     syncGestureComponents()
-    updateLockLoop()
   }
 
   realScaleToggle.addEventListener('click', (event) => {
@@ -146,7 +100,9 @@ const initTransformLockModes = () => {
 
   scene.addEventListener('xrstart', () => {
     syncGestureComponents()
-    applyLocks()
+    if (!isDynamicScaleEnabled) {
+      group.object3D.scale.copy(trueScale)
+    }
   })
 
   setDynamicScaleMode(false)
