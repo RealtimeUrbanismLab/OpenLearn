@@ -8,6 +8,124 @@ import {initQRCode} from './qr-code'
 // Initialize QR code for desktop users
 initQRCode()
 
+const initInstructionOverlay = () => {
+  const overlay = document.getElementById('instruction-overlay')
+  const closeButton = document.getElementById('instruction-close')
+  const permissionButton = document.getElementById('instruction-enable-motion')
+  const motionStatus = document.getElementById('instruction-motion-status')
+
+  if (!overlay || !closeButton || !permissionButton || !motionStatus) return
+
+  overlay.style.display = 'flex'
+  document.body.classList.add('instruction-overlay-open')
+
+  let isClosed = false
+  let movementScore = 0
+  let lastMagnitude = null
+  let lastTimestamp = 0
+  const shownAt = Date.now()
+  const MIN_VISIBLE_MS = 4500
+  const REQUIRED_MOVEMENT_SCORE = 22
+
+  const isPortrait = () => window.innerHeight >= window.innerWidth
+
+  const setStatusText = () => {
+    if (!isPortrait()) {
+      motionStatus.textContent = 'Rotate your device to portrait mode, then move it back and forth.'
+      return
+    }
+
+    motionStatus.textContent = 'Hold your device in portrait mode and move it gently back and forth.'
+  }
+
+  const closeOverlay = () => {
+    if (isClosed) return
+    isClosed = true
+
+    overlay.style.display = 'none'
+    document.body.classList.remove('instruction-overlay-open')
+
+    window.removeEventListener('devicemotion', handleMotion)
+    window.removeEventListener('orientationchange', handleOrientation)
+    window.removeEventListener('resize', handleOrientation)
+  }
+
+  const maybeAutoClose = () => {
+    const visibleFor = Date.now() - shownAt
+    if (visibleFor < MIN_VISIBLE_MS) return
+    if (!isPortrait()) return
+    if (movementScore < REQUIRED_MOVEMENT_SCORE) return
+    closeOverlay()
+  }
+
+  const handleMotion = (event) => {
+    if (isClosed || !isPortrait()) return
+
+    const accel = event.accelerationIncludingGravity || event.acceleration
+    if (!accel) return
+
+    const x = Math.abs(accel.x || 0)
+    const y = Math.abs(accel.y || 0)
+    const z = Math.abs(accel.z || 0)
+    const magnitude = x + y + z
+    const now = typeof event.timeStamp === 'number' ? event.timeStamp : performance.now()
+
+    if (lastMagnitude !== null && lastTimestamp !== 0) {
+      const dt = now - lastTimestamp
+      if (dt > 5 && dt < 1000) {
+        const delta = Math.abs(magnitude - lastMagnitude)
+        movementScore = Math.min(120, movementScore + delta * 0.3)
+      }
+    }
+
+    movementScore = Math.max(0, movementScore - 0.02)
+    lastMagnitude = magnitude
+    lastTimestamp = now
+
+    maybeAutoClose()
+  }
+
+  const handleOrientation = () => {
+    if (isClosed) return
+    setStatusText()
+    maybeAutoClose()
+  }
+
+  const enableMotionTracking = () => {
+    if (isClosed) return
+    window.addEventListener('devicemotion', handleMotion, {passive: true})
+    setStatusText()
+  }
+
+  closeButton.addEventListener('click', closeOverlay)
+
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    permissionButton.style.display = 'inline-flex'
+    permissionButton.addEventListener('click', () => {
+      DeviceMotionEvent.requestPermission()
+        .then((permissionState) => {
+          if (permissionState === 'granted') {
+            permissionButton.style.display = 'none'
+            enableMotionTracking()
+          } else {
+            motionStatus.textContent = 'Motion access is blocked. Tap Continue to proceed manually.'
+          }
+        })
+        .catch(() => {
+          motionStatus.textContent = 'Unable to enable motion access. Tap Continue to proceed manually.'
+        })
+    })
+  } else if ('DeviceMotionEvent' in window) {
+    enableMotionTracking()
+  } else {
+    motionStatus.textContent = 'Motion tracking is unavailable on this device. Tap Continue to proceed.'
+  }
+
+  window.addEventListener('orientationchange', handleOrientation)
+  window.addEventListener('resize', handleOrientation)
+  setStatusText()
+}
+
 const initTransformControlsMenu = () => {
   const controls = document.getElementById('transform-controls')
   const menuButton = document.getElementById('transform-menu-button')
@@ -111,10 +229,12 @@ const initTransformLockModes = () => {
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
+    initInstructionOverlay()
     initTransformControlsMenu()
     initTransformLockModes()
   })
 } else {
+  initInstructionOverlay()
   initTransformControlsMenu()
   initTransformLockModes()
 }

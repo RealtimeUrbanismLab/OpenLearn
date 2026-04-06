@@ -14,6 +14,36 @@
   }
 </style>
 
+<div id="instruction-overlay" class="instruction-overlay" style="display: none" aria-live="polite">
+  <div class="instruction-overlay-card">
+    <h1>Before You Begin</h1>
+    <ol>
+      <li>Make sure you're in a large, clear space, ideally 10 meters by 10 meters.</li>
+      <li>Open the app on a mobile device like a tablet or smartphone.</li>
+      <li>
+        To configure the app, hold your device vertically and move it back and forth until the popup disappears
+        (this may take 5-10 seconds). You should see a model of a CT scanner: try getting closer, or walking around it.
+      </li>
+      <li>
+        Click on any part of the CT scanner to view a description of its purpose. Use the "next" or "back" buttons
+        to progress through descriptions of all components. If the currently selected component is off-screen, a popup
+        will appear: try turning around to locate it.
+      </li>
+      <li>
+        "Dynamic zoom" allows you to pinch to zoom in on the model, and "dynamic rotate" allows you to use two-finger
+        drag to rotate the model. To toggle these, open the menu in the upper left corner.
+      </li>
+    </ol>
+    <p id="instruction-motion-status" class="instruction-motion-status">
+      Hold your device in portrait mode and move it gently back and forth.
+    </p>
+    <div class="instruction-overlay-actions">
+      <button id="instruction-enable-motion" type="button" style="display: none;">Enable Motion Access</button>
+      <button id="instruction-close" type="button">Continue</button>
+    </div>
+  </div>
+</div>
+
 <button id="rotate-button">Turn On</button>
 <div id="transform-controls">
   <button id="transform-menu-button" type="button" aria-label="Toggle transform controls" aria-expanded="false">

@@ -208,6 +208,99 @@ a {
   color: inherit;
 }
 
+body.instruction-overlay-open {
+  overflow: hidden;
+}
+
+.instruction-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: calc(18px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));
+  background: linear-gradient(160deg, rgba(6, 12, 20, 0.93), rgba(18, 26, 38, 0.96));
+  color: #f4f7fb;
+  pointer-events: auto;
+}
+
+.instruction-overlay-card {
+  width: min(920px, 100%);
+  height: 100%;
+  overflow-y: auto;
+  padding: 18px 16px 22px;
+  border-radius: 20px;
+  background: rgba(9, 16, 26, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.instruction-overlay-card h1 {
+  margin: 0 0 12px;
+  font-size: 1.3rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: #ffffff;
+}
+
+.instruction-overlay-card ol {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 10px;
+}
+
+.instruction-overlay-card li {
+  font-size: 0.94rem;
+  line-height: 1.45;
+  font-weight: 400;
+}
+
+.instruction-motion-status {
+  margin: 16px 0 0;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: #d4e5ff;
+}
+
+.instruction-overlay-actions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+#instruction-enable-motion,
+#instruction-close {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#instruction-enable-motion {
+  background-color: #e7f1ff;
+  color: #0b2f56;
+}
+
+#instruction-close {
+  background-color: #2f6df6;
+  color: #ffffff;
+}
+
+#instruction-enable-motion:hover,
+#instruction-close:hover {
+  filter: brightness(0.95);
+}
+
+#instruction-enable-motion:active,
+#instruction-close:active {
+  filter: brightness(0.88);
+}
+
 /* Popup styling */
 .popup {
   position: fixed;
@@ -360,6 +453,15 @@ a {
   #nextbutton,
   #backbutton {
     width: 40vw;
+  }
+
+  .instruction-overlay-card {
+    border-radius: 16px;
+    padding: 14px 12px 18px;
+  }
+
+  .instruction-overlay-card li {
+    font-size: 0.88rem;
   }
 }
 
