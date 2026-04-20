@@ -76,11 +76,14 @@ body {
 
 #transform-controls {
   position: fixed;
-  left: 12px;
-  top: 12px;
+  left: calc(12px + env(safe-area-inset-left));
+  top: calc(12px + env(safe-area-inset-top));
   z-index: 10002;
   pointer-events: auto;
   touch-action: manipulation;
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
 }
 
 #transform-menu-button {
@@ -118,7 +121,7 @@ body {
 
 #offscreen-status-banner {
   position: fixed;
-  top: 12px;
+  top: calc(12px + env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
   z-index: 10003;
@@ -137,9 +140,9 @@ body {
 #transform-menu-panel {
   display: none;
   margin-top: 8px;
-  display: none;
   flex-direction: column;
   gap: 8px;
+  overflow-y: auto;
 }
 
 #transform-controls.open #transform-menu-panel {
@@ -603,9 +606,9 @@ a {
 @media (min-aspect-ratio: 1/1) {
   .popup {
     position: fixed;
-    top: 5vh;
-    bottom: 5vh;
-    right: 3vw;
+    top: calc(5vh + env(safe-area-inset-top));
+    bottom: calc(5vh + env(safe-area-inset-bottom));
+    right: calc(3vw + env(safe-area-inset-right));
     left: auto;
     width: 26vw;
     max-width: 34vw;
