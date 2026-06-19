@@ -1,6 +1,6 @@
 # OpenLearn — Medical Equipment AR
 
-**OpenLearn** is an augmented-reality learning platform for medical education built by the [VaiderLab](https://realtimeurbanismlab.github.io/OpenLearn/). Each module places a detailed, interactive 3D model of a piece of medical equipment into the real world via a phone or tablet camera. Tapping any part of the model opens a description of its purpose and role in patient care.
+**OpenLearn** is an augmented-reality learning platform for medical education built by the [VaiderLab](https://vaiderlab.org/) and [Realtime Urbanism Lab](http://labs.aap.cornell.edu/realtime-urbanism). Each module places a detailed, interactive 3D model of a piece of medical equipment into the real world via a phone or tablet camera. Tapping any part of the model opens a description of its purpose and role in patient care.
 
 **Live site:** https://realtimeurbanismlab.github.io/OpenLearn/
 
