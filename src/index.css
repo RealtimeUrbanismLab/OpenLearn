@@ -604,3 +604,16 @@ a {
   .content { font-size: 1.1em; }
   .popup-close-icon { font-size: 24px; }
 }
+
+/* Override xrextras hardcoded purple (#AD50FF / #7611B7) with VaiderLab teal */
+.copy-link-btn,
+.confirm-button {
+  background-color: #3a7d82 !important;
+}
+.xrextras-old-style .copy-link-btn {
+  background-color: #2e6468 !important;
+}
+.desktop-home-link {
+  background-color: #3a7d82 !important;
+  color: white !important;
+}

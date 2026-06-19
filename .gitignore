@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.claude/
+
+# Webpack HMR artifacts
+*.hot-update.json
+*.hot-update.js
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.suo
+*.user
