@@ -667,8 +667,8 @@ AFRAME.registerComponent('auto-floor-anchor', {
     let remaining = models.length
     const trySnap = () => {
       if (--remaining <= 0) {
-        // Wait one frame so A-Frame has propagated all world matrices
-        requestAnimationFrame(() => this._snapToFloor())
+        // 300 ms lets all child matrix worlds settle after the last model-loaded event
+        setTimeout(() => this._snapToFloor(), 300)
       }
     }
 
@@ -683,7 +683,14 @@ AFRAME.registerComponent('auto-floor-anchor', {
     this.el.object3D.updateMatrixWorld(true)
     const box = new THREE.Box3().setFromObject(this.el.object3D)
     if (box.isEmpty() || !isFinite(box.min.y)) return
-    this.el.object3D.position.y -= box.min.y
+
+    const floorY = box.min.y
+    const height = box.max.y - box.min.y
+    console.log(`[auto-floor-anchor] bbox min.y=${floorY.toFixed(4)}m  height=${height.toFixed(4)}m`)
+
+    // Use setAttribute so A-Frame's position component stays in sync
+    const pos = this.el.getAttribute('position') || {x: 0, y: 0, z: 0}
+    this.el.setAttribute('position', {x: pos.x, y: pos.y - floorY, z: pos.z})
   },
 })
 
