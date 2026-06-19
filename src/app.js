@@ -8,6 +8,12 @@ import {initQRCode} from './qr-code'
 // Initialize QR code for desktop users
 initQRCode()
 
+// Prevent the browser from zooming the HTML page on multi-finger pinch.
+// Only blocks touchmove with 2+ fingers; single-finger scroll and taps are unaffected.
+document.addEventListener('touchmove', e => {
+  if (e.touches.length > 1) e.preventDefault()
+}, {passive: false})
+
 const initInstructionOverlay = () => {
   const overlay = document.getElementById('instruction-overlay')
   const closeButton = document.getElementById('instruction-close')

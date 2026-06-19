@@ -10,14 +10,23 @@ Run `npm install` in this folder.
 Run `npm run serve` to run the development server.
 
 #### Testing on Mobile
-To test your project on mobile devices, especially for AR experiences that require camera access, you'll need to serve your development server over HTTPS. We recommend using [ngrok](https://ngrok.com/) to create a secure tunnel to your local server. After setting up ngrok, add the following configuration to `config/webpack.config.js` under the `devServer` section:
+AR experiences require HTTPS and camera access, so you can't test on a phone via a plain local IP. Use [ngrok](https://ngrok.com/) to create a secure HTTPS tunnel to your local dev server.
 
-```javascript
-devServer: {
-  // ... existing config
-  allowedHosts: ['.ngrok-free.dev']
-}
+**Install ngrok** (one-time):
 ```
+npm install -g ngrok
+```
+Then authenticate with your free ngrok account:
+```
+ngrok config add-authtoken <your-token>
+```
+Get your token at [dashboard.ngrok.com/get-started/your-authtoken](https://dashboard.ngrok.com/get-started/your-authtoken).
+
+**Run** (in a second terminal, while `npm run serve` is running):
+```
+ngrok http 8080
+```
+Ngrok prints an `https://xxxx.ngrok-free.app` URL — open that on your phone. The webpack dev server is already configured to accept ngrok hosts, so no config changes are needed.
 
 ### Publishing
 Run `npm run build` to generate a production build. The resulting build will be in `docs/` for GitHub Pages (`main` branch, `/docs` folder).
