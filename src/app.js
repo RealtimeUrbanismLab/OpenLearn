@@ -656,6 +656,37 @@ AFRAME.registerComponent('ssao', {
   },
 })
 
+// Snaps the model group to the AR floor after all GLBs have loaded.
+// Measures the world-space bounding box of the entire assembly and shifts
+// the group's Y so the lowest vertex sits exactly at y=0 (the detected floor).
+AFRAME.registerComponent('auto-floor-anchor', {
+  init() {
+    const models = Array.from(this.el.querySelectorAll('[gltf-model]'))
+    if (!models.length) return
+
+    let remaining = models.length
+    const trySnap = () => {
+      if (--remaining <= 0) {
+        // Wait one frame so A-Frame has propagated all world matrices
+        requestAnimationFrame(() => this._snapToFloor())
+      }
+    }
+
+    models.forEach(el => {
+      const alreadyLoaded = el.components['gltf-model'] && el.components['gltf-model'].model
+      if (alreadyLoaded) trySnap()
+      else el.addEventListener('model-loaded', trySnap, {once: true})
+    })
+  },
+
+  _snapToFloor() {
+    this.el.object3D.updateMatrixWorld(true)
+    const box = new THREE.Box3().setFromObject(this.el.object3D)
+    if (box.isEmpty() || !isFinite(box.min.y)) return
+    this.el.object3D.position.y -= box.min.y
+  },
+})
+
 function setupSSAO(scene, renderer) {
   if (!renderer || !renderer.getPixelRatio) return
   
