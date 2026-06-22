@@ -661,6 +661,8 @@ AFRAME.registerComponent('ssao', {
 // the group's Y so the lowest vertex sits exactly at y=0 (the detected floor).
 AFRAME.registerComponent('auto-floor-anchor', {
   init() {
+    this._snapCount = 0
+
     const models = Array.from(this.el.querySelectorAll('[gltf-model]'))
     if (!models.length) return
 
@@ -686,11 +688,19 @@ AFRAME.registerComponent('auto-floor-anchor', {
 
     const floorY = box.min.y
     const height = box.max.y - box.min.y
-    console.log(`[auto-floor-anchor] bbox min.y=${floorY.toFixed(4)}m  height=${height.toFixed(4)}m`)
+    this._snapCount++
+    console.log(`[auto-floor-anchor] snap #${this._snapCount} min.y=${floorY.toFixed(4)}m height=${height.toFixed(4)}m`)
 
     // Use setAttribute so A-Frame's position component stays in sync
     const pos = this.el.getAttribute('position') || {x: 0, y: 0, z: 0}
     this.el.setAttribute('position', {x: pos.x, y: pos.y - floorY, z: pos.z})
+
+    // Retry for ~12 s after load: SLAM refines its ground-plane estimate during
+    // the coaching "move back and forth" phase, which can shift y=0 downward and
+    // make the model appear to float. Re-snapping catches that correction.
+    if (this._snapCount <= 6) {
+      setTimeout(() => this._snapToFloor(), 2000)
+    }
   },
 })
 
