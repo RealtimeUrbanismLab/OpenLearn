@@ -52,7 +52,7 @@
   <!-- Camera with raycaster for tap interactions -->
   <a-camera
     id="camera"
-    position="0 0.55 6.6"
+    position="2 1.55 2"
     rotation="0 0 0"
     raycaster="objects: .cantap, .interactable"
     cursor="rayOrigin: mouse; fuse: false">
@@ -96,10 +96,10 @@
     xrextras-attach="target: camera; offset: 0 1.4 1.2">
   </a-entity>
 
-  <!-- Main manipulatable group -->
+  <!-- Main manipulatable group , originall scale was scale="1.44 1.44 1.44"-->
   <a-entity
     id="group"
-    scale="1.44 1.44 1.44"
+    scale="1.0 1.0 1.0"
     auto-floor-anchor
     xrextras-gesture-detector
     xrextras-two-finger-rotate
@@ -214,9 +214,9 @@
   <a-plane
     id="ground"
     rotation="-90 0 0"
-    position="0 -200 0"
-    width="1000"
-    height="1000"
+    position="0 0 0"
+    width="40"
+    height="40"
     material="shader: shadow"
     shadow="receive: true">
   </a-plane>
