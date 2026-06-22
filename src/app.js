@@ -145,6 +145,17 @@ const initTransformLockModes = () => {
     setDynamicRotationMode(fixInPlaceToggle.checked)
   })
 
+  const debugFloorToggle = document.getElementById('debug-floor-button')
+  const debugFloorEntity = document.getElementById('debug-floor')
+  if (debugFloorToggle && debugFloorEntity) {
+    debugFloorToggle.addEventListener('click', (e) => e.stopPropagation())
+    debugFloorToggle.addEventListener('change', (e) => {
+      e.stopPropagation()
+      debugFloorEntity.setAttribute('visible', debugFloorToggle.checked)
+    })
+    debugFloorToggle.checked = false
+  }
+
   scene.addEventListener('xrstart', () => {
     syncGestureComponents()
     if (!isDynamicScaleEnabled) {
@@ -695,10 +706,10 @@ AFRAME.registerComponent('auto-floor-anchor', {
     const pos = this.el.getAttribute('position') || {x: 0, y: 0, z: 0}
     this.el.setAttribute('position', {x: pos.x, y: pos.y - floorY, z: pos.z})
 
-    // Retry for ~12 s after load: SLAM refines its ground-plane estimate during
-    // the coaching "move back and forth" phase, which can shift y=0 downward and
-    // make the model appear to float. Re-snapping catches that correction.
-    if (this._snapCount <= 6) {
+    // Retry for ~40 s after load: SLAM can take that long to stabilise its
+    // floor-plane estimate during the coaching "move back and forth" phase.
+    // Each retry re-measures the bbox so any SLAM coordinate shift is caught.
+    if (this._snapCount <= 20) {
       setTimeout(() => this._snapToFloor(), 2000)
     }
   },
