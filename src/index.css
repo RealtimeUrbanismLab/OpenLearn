@@ -303,6 +303,19 @@ a {
   font-weight: 400;
 }
 
+.gesture-list {
+  margin: 8px 0 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 6px;
+  list-style: disc;
+}
+
+.gesture-list li {
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
 .instruction-motion-status {
   margin: 16px 0 0;
   font-size: 0.84rem;

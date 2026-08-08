@@ -88,7 +88,12 @@ const initTransformLockModes = () => {
 
   if (!realScaleToggle || !fixInPlaceToggle || !dynamicPlacementToggle || !scene || !group) return
 
+  // Default viewing scale, applied once here so the model has a sensible
+  // size on load. After this, scale is entirely user-controlled: toggling
+  // Dynamic Scale off only locks whatever scale the user last set — it must
+  // never snap back to this baseline.
   const trueScale = group.object3D.scale.clone().multiplyScalar(2.2)
+  group.object3D.scale.copy(trueScale)
   let isDynamicScaleEnabled = false
   let isDynamicRotationEnabled = false
   let isDynamicPlacementEnabled = false
@@ -120,10 +125,6 @@ const initTransformLockModes = () => {
   const setDynamicScaleMode = (enabled) => {
     isDynamicScaleEnabled = enabled
     realScaleToggle.checked = enabled
-
-    if (!enabled) {
-      group.object3D.scale.copy(trueScale)
-    }
 
     syncGestureComponents()
   }
@@ -169,6 +170,16 @@ const initTransformLockModes = () => {
     setDynamicPlacementMode(dynamicPlacementToggle.checked)
   })
 
+  // xrextras-hold-drag's drop animation hardcodes the group's Y back to 0,
+  // which fights with auto-floor-anchor's Y offset. Re-snap to the floor
+  // after every drop so placement only ever moves the model along X/Z.
+  group.addEventListener('animationcomplete__drop', () => {
+    const floorAnchor = group.components['auto-floor-anchor']
+    if (floorAnchor && typeof floorAnchor._snapToFloor === 'function') {
+      floorAnchor._snapToFloor()
+    }
+  })
+
   const debugFloorToggle = document.getElementById('debug-floor-button')
   const debugFloorEntity = document.getElementById('debug-floor')
   if (debugFloorToggle && debugFloorEntity) {
@@ -182,9 +193,6 @@ const initTransformLockModes = () => {
 
   scene.addEventListener('xrstart', () => {
     syncGestureComponents()
-    if (!isDynamicScaleEnabled) {
-      group.object3D.scale.copy(trueScale)
-    }
   })
 
   setDynamicScaleMode(false)
