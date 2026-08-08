@@ -166,6 +166,7 @@ body {
 
 #real-scale-button,
 #fix-in-place-button,
+#dynamic-placement-button,
 #debug-floor-button {
   position: absolute;
   opacity: 0;
@@ -199,18 +200,21 @@ body {
 
 #real-scale-button:checked + .mode-toggle-slider,
 #fix-in-place-button:checked + .mode-toggle-slider,
+#dynamic-placement-button:checked + .mode-toggle-slider,
 #debug-floor-button:checked + .mode-toggle-slider {
   background-color: #2f6df6;
 }
 
 #real-scale-button:checked + .mode-toggle-slider::before,
 #fix-in-place-button:checked + .mode-toggle-slider::before,
+#dynamic-placement-button:checked + .mode-toggle-slider::before,
 #debug-floor-button:checked + .mode-toggle-slider::before {
   transform: translateX(18px);
 }
 
 #real-scale-button:focus-visible + .mode-toggle-slider,
 #fix-in-place-button:focus-visible + .mode-toggle-slider,
+#dynamic-placement-button:focus-visible + .mode-toggle-slider,
 #debug-floor-button:focus-visible + .mode-toggle-slider {
   outline: 2px solid #ffffff;
   outline-offset: 2px;

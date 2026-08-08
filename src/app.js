@@ -82,14 +82,16 @@ const initInstructionsMenuButton = (onOpenInstructions) => {
 const initTransformLockModes = () => {
   const realScaleToggle = document.getElementById('real-scale-button')
   const fixInPlaceToggle = document.getElementById('fix-in-place-button')
+  const dynamicPlacementToggle = document.getElementById('dynamic-placement-button')
   const scene = document.querySelector('a-scene')
   const group = document.getElementById('group')
 
-  if (!realScaleToggle || !fixInPlaceToggle || !scene || !group) return
+  if (!realScaleToggle || !fixInPlaceToggle || !dynamicPlacementToggle || !scene || !group) return
 
   const trueScale = group.object3D.scale.clone().multiplyScalar(2.2)
   let isDynamicScaleEnabled = false
   let isDynamicRotationEnabled = false
+  let isDynamicPlacementEnabled = false
 
   const syncGestureComponents = () => {
     if (!group.hasAttribute('xrextras-gesture-detector')) {
@@ -107,6 +109,12 @@ const initTransformLockModes = () => {
     } else {
       group.removeAttribute('xrextras-pinch-scale')
     }
+
+    if (isDynamicPlacementEnabled) {
+      group.setAttribute('xrextras-hold-drag', 'rise-height: 0')
+    } else {
+      group.removeAttribute('xrextras-hold-drag')
+    }
   }
 
   const setDynamicScaleMode = (enabled) => {
@@ -123,6 +131,13 @@ const initTransformLockModes = () => {
   const setDynamicRotationMode = (enabled) => {
     isDynamicRotationEnabled = enabled
     fixInPlaceToggle.checked = enabled
+
+    syncGestureComponents()
+  }
+
+  const setDynamicPlacementMode = (enabled) => {
+    isDynamicPlacementEnabled = enabled
+    dynamicPlacementToggle.checked = enabled
 
     syncGestureComponents()
   }
@@ -145,6 +160,15 @@ const initTransformLockModes = () => {
     setDynamicRotationMode(fixInPlaceToggle.checked)
   })
 
+  dynamicPlacementToggle.addEventListener('click', (event) => {
+    event.stopPropagation()
+  })
+
+  dynamicPlacementToggle.addEventListener('change', (event) => {
+    event.stopPropagation()
+    setDynamicPlacementMode(dynamicPlacementToggle.checked)
+  })
+
   const debugFloorToggle = document.getElementById('debug-floor-button')
   const debugFloorEntity = document.getElementById('debug-floor')
   if (debugFloorToggle && debugFloorEntity) {
@@ -165,6 +189,7 @@ const initTransformLockModes = () => {
 
   setDynamicScaleMode(false)
   setDynamicRotationMode(false)
+  setDynamicPlacementMode(false)
 }
 
 if (document.readyState === 'loading') {

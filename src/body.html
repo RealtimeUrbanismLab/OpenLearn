@@ -30,8 +30,9 @@
         will appear: try turning around to locate it.
       </li>
       <li>
-        "Dynamic zoom" allows you to pinch to zoom in on the model, and "dynamic rotate" allows you to use two-finger
-        drag to rotate the model. To toggle these, open the menu in the upper left corner.
+        "Dynamic Scale" allows you to pinch to zoom in on the model, "Dynamic Rotation" allows you to use two-finger
+        drag to rotate the model, and "Dynamic Placement" allows you to press and drag with one finger to move the
+        model. To toggle these, open the menu in the upper left corner.
       </li>
     </ol>
     <div class="instruction-overlay-actions">
@@ -57,6 +58,13 @@
       <span class="mode-toggle-label">Dynamic Rotation</span>
       <label class="mode-toggle-switch">
         <input id="fix-in-place-button" type="checkbox">
+        <span class="mode-toggle-slider"></span>
+      </label>
+    </div>
+    <div class="mode-toggle-row" id="dynamic-placement-row">
+      <span class="mode-toggle-label">Dynamic Placement</span>
+      <label class="mode-toggle-switch">
+        <input id="dynamic-placement-button" type="checkbox">
         <span class="mode-toggle-slider"></span>
       </label>
     </div>
